@@ -7,7 +7,7 @@
 read_gtf <- function(path) {
   path %>%
     rtracklayer::import() %>%
-    as.tibble() %>%
+    tibble::as.tibble() %>%
     return()
 }
 

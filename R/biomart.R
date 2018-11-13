@@ -8,7 +8,7 @@
 #' @param ensembl_version Integer of ensembl_version
 get_ensembl_host_from_version <- function(ensembl_version) {
   url <- biomaRt::listEnsemblArchives() %>%
-    as.tibble() %>%
+    tibble::as.tibble() %>%
     dplyr::filter(name == paste0('Ensembl ', ensembl_version)) %>%
     .$url %>%
     stringr::str_remove('http://')
@@ -100,7 +100,7 @@ attach_biomart <- function(
       dplyr::distinct_(ensembl_id_var) %>%
       as.list(),
     mart = ensembl
-  ) %>% as.tibble()
+  ) %>% tibble::as.tibble()
   # Attach data to biomart output
   dat_result <- dat %>%
     dplyr::left_join(dat_result, by = setNames(filter_type, ensembl_id_var))
