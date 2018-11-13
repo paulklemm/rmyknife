@@ -2,3 +2,5 @@
 
 export(attach_biomart)
 export(get_ensembl_host_from_version)
+export(read_cufflinks)
+export(read_gtf)
