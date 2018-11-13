@@ -21,4 +21,3 @@ Imports:
     tibble,
     rtracklayer,
     readr
-Remotes: paulklemm/rmyknife

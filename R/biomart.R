@@ -20,7 +20,6 @@ get_ensembl_host_from_version <- function(ensembl_version) {
   }
 }
 
-
 #' Attach Biomart variables based on either gene or transcript IDs
 #' @param dat input data frame containing either ensembl gene or transcript ids
 #' @param ensembl_id_var name of variable containing the gene/transcript ids
