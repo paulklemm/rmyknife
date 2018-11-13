@@ -66,7 +66,7 @@ attach_biomart <- function(
     filter_type <- "ensembl_gene_id"
   } else if (type == "T") {
     verbose_id_text <- "Identifier type is Transcripts"
-    attributes %<>% c("ensembl_gene_id", "ensembl_transcript_id")
+    attributes %<>% c("ensembl_transcript_id")
     filter_type <- "ensembl_transcript_id"
     # type is neither G or T
   } else {
