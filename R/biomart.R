@@ -1,0 +1,145 @@
+#' Get ensembl host from ensembl_version without 'http://'
+#' Example:
+#'   get_ensembl_host_from_version(92)
+#'   [1] "apr2018.archive.ensembl.org"
+#'
+#' @export
+#' @imports biomaRt magrittr stringr dplyr
+#' @param ensembl_version Integer of ensembl_version
+get_ensembl_host_from_version <- function(ensembl_version) {
+  url <- biomaRt::listEnsemblArchives() %>%
+    as.tibble() %>%
+    dplyr::filter(name == paste0('Ensembl ', ensembl_version)) %>%
+    .$url %>%
+    stringr::str_remove('http://')
+  if (identical(url, character(0))) {
+    paste0('No host found for Ensembl version ', ensembl_version) %>%
+      stop()
+  } else {
+    url %>% return()
+  }
+}
+
+
+#' Attach Biomart variables based on either gene or transcript IDs
+#' @param dat input data frame containing either ensembl gene or transcript ids
+#' @param ensembl_id_var name of variable containing the gene/transcript ids
+#' @param attributes biomart attributes to retrieve
+#' @param ensembl_version integer of ensembl version
+#' @param verbose Print summary statistics to check for 1:1 or 1:N mappings
+#'
+#' @return Tibble of dat with attached biomaRt variables
+#' @export
+#' @examples
+#'    test_data <- tibble(
+#'      gene_ids = c("ENSMUSG00000102693", "ENSMUSG00000064842", "ENSMUSG00000102851", "ENSMUSG00000089699", "ENSMUSG00000103147", "ENSMUSG00000102348", "ENSMUSG00000102592", "ENSMUSG00000104238", "ENSMUSG00000102269", "ENSMUSG00000096126"),
+#'      my_id = 1:10
+#'    )
+#'    attach_biomart(test_data, ensembl_id_var = "gene_ids", ensembl_version = 94)
+#'
+#'    test_data_transcripts <- tibble(
+#'      transcripts = c("ENSMUST00000082423", "ENSMUST00000082422", "ENSMUST00000082421", "ENSMUST00000082420", "ENSMUST00000082419", "ENSMUST00000082418", "ENSMUST00000082417", "ENSMUST00000082416", "ENSMUST00000082415", "ENSMUST00000082414"),
+#'      ids = 1:10
+#'    )
+#'    attach_biomart(test_data_transcripts, ensembl_id_var = "transcripts", ensembl_version = 92)
+attach_biomart <- function(
+    dat,
+    ensembl_id_var = "ensembl_gene_id",
+    attributes = c("description",
+    "gene_biotype",
+    "external_gene_name"),
+    ensembl_version,
+    verbose = TRUE
+  ) {
+  # Check if we have genes or transcripts as input based on the first element
+  type <- dat %>% dplyr::select_(ensembl_id_var) %>%
+    head(1) %>%
+    stringr::str_match(pattern="ENS[a-zA-Z]{3}(\\w)") %>%
+    # Identifier is the second entry
+    .[2]
+  verbose_id_text <- ""
+  filter_type <- ""
+  # Check gene type
+  if (type == "G") {
+    verbose_id_text <- "Identifier type is Genes"
+    attributes %<>% c("ensembl_gene_id")
+    filter_type <- "ensembl_gene_id"
+  } else if (type == "T") {
+    verbose_id_text <- "Identifier type is Transcripts"
+    attributes %<>% c("ensembl_gene_id", "ensembl_transcript_id")
+    filter_type <- "ensembl_transcript_id"
+    # type is neither G or T
+  } else {
+    paste0("Cannot identify type (gene or transcript) from gene identifier") %>%
+      stop()
+  }
+
+  species_id <- dat %>% dplyr::select_(ensembl_id_var) %>%
+    head(1) %>%
+    stringr::str_match(pattern="ENS([a-zA-Z]{3})") %>%
+    .[2]
+  # Setup the dataset based on species
+  if (species_id == "MUS") {
+    ensembl_dataset = "mmusculus_gene_ensembl"
+  } else {
+    paste0("Species ", species_id, " not supported") %>%
+      stop()
+  }
+  # Get Ensembl dataset
+  ensembl <- biomaRt::useMart(
+    host = get_ensembl_host_from_version(ensembl_version),
+    biomart = 'ENSEMBL_MART_ENSEMBL',
+    dataset = ensembl_dataset
+  )
+  # BiomaRt call
+  dat_result <- biomaRt::getBM(
+    attributes = attributes,
+    filters = filter_type,
+    values = dat %>%
+      dplyr::select_(ensembl_id_var) %>%
+      dplyr::distinct_(ensembl_id_var) %>%
+      as.list(),
+    mart = ensembl
+  ) %>% as.tibble()
+  # Attach data to biomart output
+  dat_result <- dat %>%
+    dplyr::left_join(dat_result, by = setNames(filter_type, ensembl_id_var))
+  # Print output statistics when verbose is true
+  if (verbose) {
+    paste0("Attaching Biomart gene information to input dataset (n = ", dat %>% nrow(), ", attached_n = ", dat_result %>% nrow(), "). Species is ", ensembl_dataset, ". " , verbose_id_text) %>%
+      message()
+  }
+  dat_result %>%
+    return()
+}
+
+# #' @param dat
+# #' @param ensembl_id_var
+# #' @param attributes
+# #' @param ensembl_version
+# #' @param verbose
+# #'
+# #' @return Tibble of dat with attached biomaRt variables
+# #' @export
+# #' @examples
+# #'    test_data <- tibble(
+# #'      gene_ids = c("ENSMUSG00000000001","ENSMUSG00000000003","ENSMUSG00000000028","ENSMUSG00000000031","ENSMUSG00000000037","ENSMUSG00000000049","ENSMUSG00000000056","ENSMUSG00000000058","ENSMUSG00000000078","ENSMUSG00000000085"),
+# #'      my_id = 1:10
+# #'    )
+# #'    get_goterm_genes_from_biomart(test_data, ensembl_id_var = "gene_ids", ensembl_version = 94)
+# #'
+# #'    test_data_transcripts <- tibble(
+# #'      transcripts = c("ENSMUST00000082423", "ENSMUST00000082422", "ENSMUST00000082421", "ENSMUST00000082420", "ENSMUST00000082419", "ENSMUST00000082418", "ENSMUST00000082417", "ENSMUST00000082416", "ENSMUST00000082415", "ENSMUST00000082414"),
+# #'      ids = 1:10
+# #'    )
+# #'    get_goterm_genes_from_biomart(test_data_transcripts, ensembl_id_var = "transcripts", ensembl_version = 92)
+# attach_goterms_from_biomart <- function(dat, ensembl_id_var, ensembl_version, verbose) {
+#   attributes <- c("name_1006", "definition_1006")
+#   go_terms <-
+#     attach_biomart(dat = dat, ensembl_id_var = ensembl_id_var, attributes = attributes, ensembl_version = ensembl_version, verbose = verbose) %>%
+#     return()
+#     # # Select only the GO term attributes
+#     # subset(select = attributes) %>%
+#     # # dplyr::distinct() %>%
+#     # return()
+# }
