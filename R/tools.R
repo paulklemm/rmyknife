@@ -16,5 +16,7 @@ read_gtf <- function(path) {
 #' @imports readr magrittr
 #' @return Tibble of cufflinks data
 read_cufflinks <- function(path) {
-  path %>% readr::read_tsv() %>% return()
+  path %>%
+    readr::read_tsv() %>%
+    return()
 }
