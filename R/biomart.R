@@ -4,7 +4,7 @@
 #'   [1] "apr2018.archive.ensembl.org"
 #'
 #' @export
-#' @imports biomaRt magrittr stringr dplyr
+#' @import biomaRt magrittr stringr dplyr
 #' @param ensembl_version Integer of ensembl_version
 get_ensembl_host_from_version <- function(ensembl_version) {
   url <- biomaRt::listEnsemblArchives() %>%
@@ -44,10 +44,8 @@ get_ensembl_host_from_version <- function(ensembl_version) {
 attach_biomart <- function(
     dat,
     ensembl_id_var = "ensembl_gene_id",
-    attributes = c("description",
-    "gene_biotype",
-    "external_gene_name"),
-    ensembl_version,
+    attributes = c("description", "gene_biotype", "external_gene_name"),
+    ensembl_version = 94,
     verbose = TRUE
   ) {
   # Check if we have genes or transcripts as input based on the first element
@@ -72,7 +70,6 @@ attach_biomart <- function(
     paste0("Cannot identify type (gene or transcript) from gene identifier") %>%
       stop()
   }
-
   species_id <- dat %>% dplyr::select_(ensembl_id_var) %>%
     head(1) %>%
     stringr::str_match(pattern="ENS([a-zA-Z]{3})") %>%
@@ -85,11 +82,7 @@ attach_biomart <- function(
       stop()
   }
   # Get Ensembl dataset
-  ensembl <- biomaRt::useMart(
-    host = get_ensembl_host_from_version(ensembl_version),
-    biomart = 'ENSEMBL_MART_ENSEMBL',
-    dataset = ensembl_dataset
-  )
+  ensembl <- rmyknife::get_ensembl_dataset_from_version(ensembl_version, ensembl_dataset)
   # BiomaRt call
   dat_result <- biomaRt::getBM(
     attributes = attributes,
@@ -109,6 +102,67 @@ attach_biomart <- function(
       message()
   }
   dat_result %>%
+    return()
+}
+
+#' Get Ensembl dataset with default parameter
+#' @param ensembl_version Ensembl version you want to get data for
+#' @param ensembl_dataset Species you want to extract
+#' @import biomaRt magrittr
+#' @export
+#'
+#' @example
+#'    ensembl <- get_ensembl_dataset_from_version(94, "mmusculus_gene_ensembl")
+get_ensembl_dataset_from_version <- function(
+    ensembl_version = 94,
+    ensembl_dataset = "mmusculus_gene_ensembl"
+  ) {
+  biomaRt::useMart(
+    host = rmyknife::get_ensembl_host_from_version(ensembl_version),
+    biomart = 'ENSEMBL_MART_ENSEMBL',
+    dataset = ensembl_dataset
+  ) %>%
+    return()
+}
+
+#' Get genes associated with GO-term based on BiomaRt
+#' @param go_id ID of GO term
+#' @param ensembl Biomart connection
+#' @export
+#' @import dplyr biomaRt magrittr
+#' @return Tibble with all genes associated with GO-term
+#'
+#' @examples
+#' ion_transport_genes <- get_genes_of_goterm(go_accession = "GO:0006811", ensembl = rmyknife::get_ensembl_dataset_from_version(94, "mmusculus_gene_ensembl"))
+get_genes_of_goterm <- function(
+    go_accession,
+    ensembl,
+    verbose = TRUE
+  ) {
+  # go_accession <- "GO:0006811"; ensembl <- rmyknife::get_ensembl_dataset_from_version(94, "mmusculus_gene_ensembl") ; verbose <- TRUE
+  go_terms <- biomaRt::getBM(
+    attributes = c("ensembl_gene_id", "external_gene_name"),
+    filters = "go",
+    values = go_accession,
+    mart = ensembl
+  ) %>%
+    as_tibble()
+  if (verbose) {
+    # Get GO name. It's a weird way of retreiving the name, getting all GO-terms for the forst
+    # gene in the term and then filtering for the go_term accession number
+    go_name <- biomaRt::getBM(
+      attributes = c("name_1006", "go_id"),
+      filters = "ensembl_gene_id",
+      values = go_terms %>% head(1) %>% .$ensembl_gene_id,
+      mart = ensembl
+    ) %>%
+      dplyr::filter(go_id == go_accession) %>%
+      .$name_1006
+    # Print out verbose message
+    paste0("Get genes of GO term ", go_accession, " (", go_name, "): ", go_terms %>% nrow(), " genes found") %>%
+      message()
+  }
+  go_terms %>%
     return()
 }
 

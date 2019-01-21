@@ -6,7 +6,7 @@
 \usage{
 attach_biomart(dat, ensembl_id_var = "ensembl_gene_id",
   attributes = c("description", "gene_biotype", "external_gene_name"),
-  ensembl_version, verbose = TRUE)
+  ensembl_version = 94, verbose = TRUE)
 }
 \arguments{
 \item{dat}{input data frame containing either ensembl gene or transcript ids}
