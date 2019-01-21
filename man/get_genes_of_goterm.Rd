@@ -7,9 +7,9 @@
 get_genes_of_goterm(go_accession, ensembl, verbose = TRUE)
 }
 \arguments{
-\item{ensembl}{Biomart connection}
+\item{go_accession}{ID of GO term}
 
-\item{go_id}{ID of GO term}
+\item{ensembl}{Biomart connection}
 }
 \value{
 Tibble with all genes associated with GO-term
