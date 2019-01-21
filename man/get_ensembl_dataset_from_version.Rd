@@ -15,3 +15,6 @@ get_ensembl_dataset_from_version(ensembl_version = 94,
 \description{
 Get Ensembl dataset with default parameter
 }
+\examples{
+   ensembl <- get_ensembl_dataset_from_version(94, "mmusculus_gene_ensembl")
+}

@@ -111,7 +111,7 @@ attach_biomart <- function(
 #' @import biomaRt magrittr
 #' @export
 #'
-#' @example
+#' @examples
 #'    ensembl <- get_ensembl_dataset_from_version(94, "mmusculus_gene_ensembl")
 get_ensembl_dataset_from_version <- function(
     ensembl_version = 94,
@@ -175,7 +175,7 @@ get_genes_of_goterm <- function(
 #' @param go_accession GO term id, e.g. "GO:0032680"
 #' @param ensembl Ensembl dataset object
 #'
-#' @example
+#' @examples
 #'    get_goterm_name_from_id(go_accession = "GO:0032680", ensembl = rmyknife::get_ensembl_dataset_from_version(94, "mmusculus_gene_ensembl"))
 get_goterm_name_from_id <- function(go_accession, ensembl) {
   # It's a weird way of retreiving the name, getting all GO-terms for the first

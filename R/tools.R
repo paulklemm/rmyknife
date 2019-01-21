@@ -1,7 +1,7 @@
 #' Read in GTF file
 #'
 #' @param path Path to GTF file
-#' @imports magrittr rtracklayer tibble
+#' @import magrittr rtracklayer tibble
 #' @export
 #' @return Tibble of GTF file
 read_gtf <- function(path) {
@@ -14,7 +14,7 @@ read_gtf <- function(path) {
 #' Read in data from cufflinks tsv
 #'
 #' @param path Path to cufflinks tsv file
-#' @imports readr magrittr
+#' @import readr magrittr
 #' @export
 #' @return Tibble of cufflinks data
 read_cufflinks <- function(path) {

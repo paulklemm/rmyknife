@@ -12,7 +12,7 @@ Encoding: UTF-8
 LazyData: true
 biocViews:
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 6.1.0
+RoxygenNote: 6.1.1
 Imports: 
     biomaRt,
     magrittr,

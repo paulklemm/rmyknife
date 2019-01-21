@@ -14,3 +14,6 @@ get_goterm_name_from_id(go_accession, ensembl)
 \description{
 Get GO name.
 }
+\examples{
+   get_goterm_name_from_id(go_accession = "GO:0032680", ensembl = rmyknife::get_ensembl_dataset_from_version(94, "mmusculus_gene_ensembl"))
+}
