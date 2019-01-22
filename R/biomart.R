@@ -134,9 +134,9 @@ get_genes_of_goterm_helper <- function(
   ensembl
 ) {
   biomaRt::getBM(
-    attributes = c("ensembl_gene_id", "external_gene_name"),
-    filters = "go",
-    values = go_accession,
+    attributes = c("ensembl_gene_id"),
+    filters = "go_parent_term",
+    values = c(go_accession),
     mart = ensembl
   ) %>%
     as_tibble() %>%
@@ -180,7 +180,13 @@ get_genes_of_goterm <- function(
 get_goterm_name_from_id <- function(go_accession, ensembl) {
   # It's a weird way of retreiving the name, getting all GO-terms for the first
   # gene in the term and then filtering for the go_term accession number
-  go_genes <- get_genes_of_goterm_helper(go_accession, ensembl)
+  go_genes <- biomaRt::getBM(
+    attributes = c("ensembl_gene_id"),
+    filters = "go",
+    values = c(go_accession),
+    mart = ensembl
+  ) %>%
+    as_tibble()
   # Throw error if no genes could be found
   if (go_genes %>% nrow() == 0) {
     paste0("Could not find GO-term ", go_accession, " in provided ensembl data") %>%
