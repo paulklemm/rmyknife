@@ -51,9 +51,9 @@ attach_biomart <- function(
   # Check if we have genes or transcripts as input based on the first element
   type <- dat %>% dplyr::select_(ensembl_id_var) %>%
     head(1) %>%
-    stringr::str_match(pattern="ENS[a-zA-Z]{3}(\\w)") %>%
-    # Identifier is the second entry
-    .[2]
+    stringr::str_match(pattern = "ENS[a-zA-Z]{3}(\\w)") %>%
+  # Identifier is the second entry
+  .[2]
   verbose_id_text <- ""
   filter_type <- ""
   # Check gene type
@@ -72,7 +72,7 @@ attach_biomart <- function(
   }
   species_id <- dat %>% dplyr::select_(ensembl_id_var) %>%
     head(1) %>%
-    stringr::str_match(pattern="ENS([a-zA-Z]{3})") %>%
+    stringr::str_match(pattern = "ENS([a-zA-Z]{3})") %>%
     .[2]
   # Setup the dataset based on species
   if (species_id == "MUS") {
@@ -98,7 +98,7 @@ attach_biomart <- function(
     dplyr::left_join(dat_result, by = setNames(filter_type, ensembl_id_var))
   # Print output statistics when verbose is true
   if (verbose) {
-    paste0("Attaching Biomart gene information to input dataset (n = ", dat %>% nrow(), ", attached_n = ", dat_result %>% nrow(), "). Species is ", ensembl_dataset, ". " , verbose_id_text) %>%
+    paste0("Attaching Biomart gene information to input dataset (n = ", dat %>% nrow(), ", attached_n = ", dat_result %>% nrow(), "). Species is ", ensembl_dataset, ". ", verbose_id_text) %>%
       message()
   }
   dat_result %>%
