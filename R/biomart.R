@@ -160,7 +160,7 @@ get_genes_of_goterm <- function(
   # go_accession <- "GO:0006811"; ensembl <- rmyknife::get_ensembl_dataset_from_version(94, "mmusculus_gene_ensembl") ; verbose <- TRUE
   go_terms <- get_genes_of_goterm_helper(go_accession, ensembl)
   if (verbose) {
-    go_name <- get_goterm_name_from_id(go_accession, ensembl)
+    go_name <- get_goterm_name_from_id(go_accession)
     # Print out verbose message
     paste0("Get genes of GO term ", go_accession, " (", go_name, "): ", go_terms %>% nrow(), " genes found") %>%
       message()
