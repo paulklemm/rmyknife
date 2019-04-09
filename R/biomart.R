@@ -170,7 +170,7 @@ get_genes_of_goterm <- function(
 }
 
 #' Get GO name.
-#' @import biomaRt dplyr GO.db magrittr
+#' @import biomaRt dplyr GO.db magrittr AnnotationDbi
 #' @export
 #' @param go_accession GO term id, e.g. "GO:0032680"
 #'
@@ -178,7 +178,7 @@ get_genes_of_goterm <- function(
 #'    get_goterm_name_from_id(go_accession = "GO:0032680")
 get_goterm_name_from_id <- function(go_accession) {
   # Convert GOterm DB to a tibble we can filter on
-  goterm_name <- Term(GO.db::GOTERM) %>%
+  goterm_name <- AnnotationDbi::Term(GO.db::GOTERM) %>%
     as.list() %>%
     tibble::as_tibble() %>%
     tidyr::gather(key = "accession", value = "name") %>%
