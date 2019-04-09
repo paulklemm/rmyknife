@@ -170,36 +170,26 @@ get_genes_of_goterm <- function(
 }
 
 #' Get GO name.
-#' @import biomaRt dplyr
+#' @import biomaRt dplyr GO.db magrittr
 #' @export
 #' @param go_accession GO term id, e.g. "GO:0032680"
-#' @param ensembl Ensembl dataset object
 #'
 #' @examples
-#'    get_goterm_name_from_id(go_accession = "GO:0032680", ensembl = rmyknife::get_ensembl_dataset_from_version(94, "mmusculus_gene_ensembl"))
-get_goterm_name_from_id <- function(go_accession, ensembl) {
-  # It's a weird way of retreiving the name, getting all GO-terms for the first
-  # gene in the term and then filtering for the go_term accession number
-  go_genes <- biomaRt::getBM(
-    attributes = c("ensembl_gene_id"),
-    filters = "go",
-    values = c(go_accession),
-    mart = ensembl
-  ) %>%
-    as_tibble()
-  # Throw error if no genes could be found
-  if (go_genes %>% nrow() == 0) {
+#'    get_goterm_name_from_id(go_accession = "GO:0032680")
+get_goterm_name_from_id <- function(go_accession) {
+  # Convert GOterm DB to a tibble we can filter on
+  goterm_name <- Term(GO.db::GOTERM) %>%
+    as.list() %>%
+    tibble::as_tibble() %>%
+    tidyr::gather(key = "accession", value = "name") %>%
+  # Filter for term
+  dplyr::filter(accession == go_accession)
+  if (goterm_name %>% nrow() != 1) {
     paste0("Could not find GO-term ", go_accession, " in provided ensembl data") %>%
       stop()
   }
-  biomaRt::getBM(
-    attributes = c("name_1006", "go_id"),
-    filters = "ensembl_gene_id",
-    values = go_genes %>% head(1) %>% .$ensembl_gene_id,
-    mart = ensembl
-  ) %>%
-    dplyr::filter(go_id == go_accession) %>%
-    .$name_1006 %>%
+  goterm_name %>%
+    .$name %>%
     return()
 }
 

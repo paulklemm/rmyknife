@@ -4,16 +4,14 @@
 \alias{get_goterm_name_from_id}
 \title{Get GO name.}
 \usage{
-get_goterm_name_from_id(go_accession, ensembl)
+get_goterm_name_from_id(go_accession)
 }
 \arguments{
 \item{go_accession}{GO term id, e.g. "GO:0032680"}
-
-\item{ensembl}{Ensembl dataset object}
 }
 \description{
 Get GO name.
 }
 \examples{
-   get_goterm_name_from_id(go_accession = "GO:0032680", ensembl = rmyknife::get_ensembl_dataset_from_version(94, "mmusculus_gene_ensembl"))
+   get_goterm_name_from_id(go_accession = "GO:0032680")
 }
