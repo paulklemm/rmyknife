@@ -20,6 +20,59 @@ get_ensembl_host_from_version <- function(ensembl_version) {
   }
 }
 
+#' Attach Biomart Gene identifier from gene name
+#' @param dat input data frame containing Gene names
+#' @param gene_name_var Gene name column
+#' @param attributes biomart attributes to retrieve
+#' @param ensembl_version integer of ensembl version
+#' @param species Species identifier as string
+#' @param verbose Print summary statistics to check for 1:1 or 1:N mappings
+#'
+#' @return Tibble of dat with attached biomaRt variables
+#' @export
+#' @examples
+#'    tibble(
+#'      gene_ids = c("Vamp8", "Mff", "Cers6", "Adcy3"),
+#'      my_id = 1:4
+#'    ) %>%
+#'    attach_ensembl_gene_id_from_name(gene_name_var = "gene_ids", ensembl_version = 96, species = "MUS")
+#'
+attach_ensembl_gene_id_from_name <- function(
+  dat,
+  gene_name_var = "Gene",
+  ensembl_version,
+  species = "MUS",
+  verbose = TRUE) {
+  # Setup the dataset based on species
+  if (species == "MUS") {
+    ensembl_dataset <- "mmusculus_gene_ensembl"
+  } else {
+    paste0("Species ", species, " not supported") %>%
+      stop()
+  }
+  ensembl <- rmyknife::get_ensembl_dataset_from_version(ensembl_version, ensembl_dataset)
+  # BiomaRt call
+  dat_result <- biomaRt::getBM(
+    attributes = c("ensembl_gene_id", "external_gene_name"),
+    filters = "external_gene_name",
+    values = dat %>%
+      dplyr::select_(gene_name_var) %>%
+      dplyr::distinct_(gene_name_var) %>%
+      as.list(),
+    mart = ensembl
+  ) %>% tibble::as.tibble()
+  # Attach data to biomart output
+  dat_result <- dat %>%
+    dplyr::left_join(dat_result, by = setNames("external_gene_name", gene_name_var))
+  # Print output statistics when verbose is true
+  if (verbose) {
+    paste0("Attaching Biomart gene information to input dataset (n = ", dat %>% nrow(), ", attached_n = ", dat_result %>% nrow(), "). Species is ", ensembl_dataset, ".") %>%
+      message()
+  }
+  dat_result %>%
+    return()
+}
+
 #' Attach Biomart variables based on either gene or transcript IDs
 #' @param dat input data frame containing either ensembl gene or transcript ids
 #' @param ensembl_id_var name of variable containing the gene/transcript ids
@@ -52,8 +105,8 @@ attach_biomart <- function(
   type <- dat %>% dplyr::select_(ensembl_id_var) %>%
     head(1) %>%
     stringr::str_match(pattern = "ENS[a-zA-Z]{3}(\\w)") %>%
-  # Identifier is the second entry
-  .[2]
+    # Identifier is the second entry
+    .[2]
   verbose_id_text <- ""
   filter_type <- ""
   # Check gene type
@@ -76,7 +129,7 @@ attach_biomart <- function(
     .[2]
   # Setup the dataset based on species
   if (species_id == "MUS") {
-    ensembl_dataset = "mmusculus_gene_ensembl"
+    ensembl_dataset <- "mmusculus_gene_ensembl"
   } else {
     paste0("Species ", species_id, " not supported") %>%
       stop()
@@ -98,7 +151,7 @@ attach_biomart <- function(
     dplyr::left_join(dat_result, by = setNames(filter_type, ensembl_id_var))
   # Print output statistics when verbose is true
   if (verbose) {
-    paste0("Attaching Biomart gene information to input dataset (n = ", dat %>% nrow(), ", attached_n = ", dat_result %>% nrow(), "). Species is ", ensembl_dataset, ". ", verbose_id_text) %>%
+    paste0("Attaching Biomart gene information to input dataset (n = ", dat %>% nrow(), ", attached_n = ", dat_result %>% nrow(), "). Species is ", ensembl_dataset, ".") %>%
       message()
   }
   dat_result %>%
