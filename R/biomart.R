@@ -66,7 +66,11 @@ attach_ensembl_gene_id_from_name <- function(
     dplyr::left_join(dat_result, by = setNames("external_gene_name", gene_name_var))
   # Print output statistics when verbose is true
   if (verbose) {
-    paste0("Attaching Biomart gene information to input dataset (n = ", dat %>% nrow(), ", attached_n = ", dat_result %>% nrow(), "). Species is ", ensembl_dataset, ".") %>%
+    # Count the number of NA's in the column
+    na_count <- dat_result$ensembl_gene_id %>%
+      is.na() %>%
+      sum()
+    paste0("Attaching Biomart gene information to input dataset (n = ", dat %>% nrow(), ", attached_n = ", dat_result %>% nrow(), ". NA-values in ensembl_gene_id = ", na_count,"). Species is ", ensembl_dataset, ".") %>%
       message()
   }
   dat_result %>%
