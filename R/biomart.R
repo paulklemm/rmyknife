@@ -20,6 +20,75 @@ get_ensembl_host_from_version <- function(ensembl_version) {
   }
 }
 
+#' Get gene names from synonyms
+#' @export 
+#' @import tibble dplyr DBI org.Mm.eg.db magrittr
+#' @param gene_name Vector of gene names
+#' @param species Define species. Default is "MUS"
+#' @param keep_missing If we cannot identify a gene, still keep the original name?
+get_gene_name_from_synonym <- function(
+    gene_name,
+    species = "MUS",
+    keep_missing = TRUE
+  ) {
+  # Setup the dataset based on species
+  if (species == "MUS") {
+    # Get a tibble of all gene name synonyms
+    synonyms <- DBI::dbGetQuery(
+      org.Mm.eg.db::org.Mm.eg_dbconn(),
+      'SELECT * FROM alias, gene_info WHERE alias._id == gene_info._id;'
+    ) %>%
+      tibble::as_tibble() %>%
+      dplyr::select(alias_symbol, symbol) %>%
+      dplyr::mutate(alias_symbol = tolower(alias_symbol))
+  } else {
+    paste0("Species ", species, " not supported") %>%
+      stop()
+  }
+
+  # Convert vector to tibble
+  gene_name_return <- tolower(gene_name) %>%
+    tibble::tibble(gene_name = .)
+  
+  get_synonym <- function(gene) {
+    synonym <- synonyms %>%
+      dplyr::filter(alias_symbol == gene)
+    
+    # Handle multiple rows. Currently we just choose the top one
+    if (nrow(synonym) > 1) {
+      synonym %<>%
+        # Oddly enough, a synonym can map to multiple genes. Therefore we will only keep the first
+        # gene that end's up in the list to keep a n:n relationship of the function
+        head(1)
+    } else if (nrow(synonym) == 0) {
+      # Handle no return
+      if (keep_missing) {
+        return(gene)
+      } else {
+        return(NA)
+      }
+    }
+    # Return result as a single value
+    synonym %>%
+      dplyr::select(symbol) %>%
+      dplyr::pull() %>%
+      return()
+  }
+
+  # Filter the synonyms list for the ones we're interested in
+  gene_name_return <- gene_name_return %>%
+    dplyr::rowwise() %>%
+    dplyr::mutate(gene_name = get_synonym(gene_name))
+  
+  paste0("Returning ", nrow(gene_name_return), " gene names from ", nrow(gene_name_return), " input gene name(s) (", is.na(gene_name_return$gene_name) %>% sum(), " NA value(s))") %>%
+    message()
+  
+  gene_name_return %>%
+    dplyr::select(gene_name) %>%
+    dplyr::pull() %>%
+    return()
+}
+
 #' Attach Biomart Gene identifier from gene name
 #' @param dat input data frame containing Gene names
 #' @param gene_name_var Gene name column
@@ -60,7 +129,7 @@ attach_ensembl_gene_id_from_name <- function(
       dplyr::distinct_(gene_name_var) %>%
       as.list(),
     mart = ensembl
-  ) %>% tibble::as.tibble()
+  ) %>% tibble::as_tibble()
   # Attach data to biomart output
   dat_result <- dat %>%
     dplyr::left_join(dat_result, by = setNames("external_gene_name", gene_name_var))

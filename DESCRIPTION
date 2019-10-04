@@ -20,4 +20,6 @@ Imports:
     dplyr,
     tibble,
     rtracklayer,
-    readr
+    readr,
+    DBI,
+    org.Mm.eg.db
