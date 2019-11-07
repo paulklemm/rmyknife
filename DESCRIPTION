@@ -22,4 +22,5 @@ Imports:
     rtracklayer,
     readr,
     DBI,
-    org.Mm.eg.db
+    org.Mm.eg.db,
+    memoise

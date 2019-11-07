@@ -89,6 +89,20 @@ get_gene_name_from_synonym <- function(
     return()
 }
 
+#' Wrapper function for getting Memoised function
+#' Returns memoised function if option rmyknife.use_memoise is true
+#' @import biomaRt memoise
+get_memoised <- function(func) {
+  mem_func <- func
+  if (isTRUE(getOption("rmyknife.use_memoise"))) {
+    mem_func <- memoise::memoise(
+      func,
+      cache = memoise::cache_filesystem(getOption("rmyknife.memoise_path"))
+    )
+  }
+  return(mem_func)
+}
+
 #' Attach Biomart Gene identifier from gene name
 #' @param dat input data frame containing Gene names
 #' @param gene_name_var Gene name column
@@ -121,7 +135,7 @@ attach_ensembl_gene_id_from_name <- function(
   }
   ensembl <- rmyknife::get_ensembl_dataset_from_version(ensembl_version, ensembl_dataset)
   # BiomaRt call
-  dat_result <- biomaRt::getBM(
+  dat_result <- get_memoised(biomaRt::getBM)(
     attributes = c("ensembl_gene_id", "external_gene_name"),
     filters = "external_gene_name",
     values = dat %>%
@@ -210,7 +224,7 @@ attach_biomart <- function(
   # Get Ensembl dataset
   ensembl <- rmyknife::get_ensembl_dataset_from_version(ensembl_version, ensembl_dataset)
   # BiomaRt call
-  dat_result <- biomaRt::getBM(
+  dat_result <- get_memoised(biomaRt::getBM)(
     attributes = attributes,
     filters = filter_type,
     values = dat %>%
@@ -243,7 +257,7 @@ get_ensembl_dataset_from_version <- function(
     ensembl_version = 94,
     ensembl_dataset = "mmusculus_gene_ensembl"
   ) {
-  biomaRt::useMart(
+  get_memoised(biomaRt::useMart)(
     host = rmyknife::get_ensembl_host_from_version(ensembl_version),
     biomart = 'ENSEMBL_MART_ENSEMBL',
     dataset = ensembl_dataset
@@ -259,7 +273,7 @@ get_genes_of_goterm_helper <- function(
   go_accession,
   ensembl
 ) {
-  biomaRt::getBM(
+  get_memoised(biomaRt::getBM)(
     attributes = c("ensembl_gene_id"),
     filters = "go_parent_term",
     values = c(go_accession),
