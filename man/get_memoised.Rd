@@ -2,12 +2,14 @@
 % Please edit documentation in R/biomart.R
 \name{get_memoised}
 \alias{get_memoised}
-\title{Wrapper function for getting Memoised function
-Returns memoised function if option rmyknife.use_memoise is true}
+\title{Wrapper function for getting memoised function
+Returns memoised function if option rmyknife.use_memoise is true
+The memoised function will store it's value to getOption("rmyknife.memoise_path")}
 \usage{
 get_memoised(func)
 }
 \description{
-Wrapper function for getting Memoised function
+Wrapper function for getting memoised function
 Returns memoised function if option rmyknife.use_memoise is true
+The memoised function will store it's value to getOption("rmyknife.memoise_path")
 }

@@ -89,9 +89,12 @@ get_gene_name_from_synonym <- function(
     return()
 }
 
-#' Wrapper function for getting Memoised function
+#' Wrapper function for getting memoised function
 #' Returns memoised function if option rmyknife.use_memoise is true
+#' The memoised function will store it's value to getOption("rmyknife.memoise_path")
 #' @import biomaRt memoise
+#' @export
+#' @example get_memoised(biomaRt::getBM)
 get_memoised <- function(func) {
   mem_func <- func
   if (isTRUE(getOption("rmyknife.use_memoise"))) {
