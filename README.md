@@ -1,9 +1,17 @@
 # rmyknife
 
+<!-- TOC depthFrom:2 -->
+
+- [💾 Installation](#💾-installation)
+- [Memoise for BiomaRt](#memoise-for-biomart)
+- [⏳ History](#⏳-history)
+
+<!-- /TOC -->
+
 The goal of rmyknife is to provide a centralized place for R functions that I often use but that do not belong to a more specialized package yet.
 This package will probably be pretty messy.
 
-## Installation
+## 💾 Installation
 
 You can install the github version of rmyknife with:
 
@@ -22,3 +30,8 @@ You can set the following options to customize this behavior.
 options(rmyknife.use_memoise = FALSE)
 options(rmyknife.memoise_path = "<some/other/path>")
 ```
+
+## ⏳ History
+
+- *2019-11-13*
+  - Added `read_cellranger_feature_bc_matrix` function for reading 10x genomics cellranger data
