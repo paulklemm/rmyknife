@@ -23,4 +23,7 @@ Imports:
     readr,
     DBI,
     org.Mm.eg.db,
-    memoise
+    memoise,
+    Matrix,
+    Seurat,
+    hdf5r

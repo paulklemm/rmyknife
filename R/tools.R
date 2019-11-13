@@ -25,9 +25,9 @@ read_cufflinks <- function(path) {
 
 #' Read Cell Ranger matrix and return a tibble
 #' Code adapted from https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/matrices#r-load-mat
-#' @import Matrix magrittr tidyr
+#' @import Matrix magrittr tidyr Seurat hdf5r
 #' @export
-#' @param matrix_dir Path of files "matrix.mtx.gz", "features.tsv.gz" and "barcodes.tsv.gz"
+#' @param matrix_dir Path of directory containing the files "matrix.mtx.gz", "features.tsv.gz" and "barcodes.tsv.gz"
 #' @param tidy Return tidy tibble
 #' @return tibble of resulting matrix
 read_cellranger_feature_bc_matrix <- function(matrix_dir, tidy = TRUE) {
@@ -49,7 +49,18 @@ read_cellranger_feature_bc_matrix <- function(matrix_dir, tidy = TRUE) {
   colnames(mat) <- barcode_names$V1
   rownames(mat) <- feature_names$V1
 
+  mat %>%
+    cellranger_matrix_to_tibble(tidy = tidy) %>%
+    return()
+}
+
+#' Helper to convert cellranger data into a tidy tibble
+#' @param mat dgTMatrix object created from cellranger
+#' @param tidy Return tidy tibble
+#' @return tibble of matrix object
+cellranger_matrix_to_tibble <- function(mat, tidy) {
   mat %<>%
+    # Convert dgTMatrix to normal matrix
     as.matrix() %>%
     # Keep rownames
     tibble::as_tibble(rownames = NA)
@@ -66,4 +77,18 @@ read_cellranger_feature_bc_matrix <- function(matrix_dir, tidy = TRUE) {
   }
 
   return(mat)
+}
+
+#' Read Cell Ranger matrix and return a tibble
+#' Code adapted from https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/matrices#r-load-mat
+#' @import Matrix magrittr tidyr
+#' @export
+#' @param h5_path Path of file
+#' @param keep_ensembl_ids Keep original ensembl IDs or use clear gene names
+#' @param tidy Return tidy tibble
+#' @return tibble of resulting matrix
+read_cellranger_feature_bc_matrix_h5 <- function(h5_path, keep_ensembl_ids = FALSE, tidy = TRUE) {
+  Seurat::Read10X_h5(h5_path, use.names = keep_ensembl_ids) %>%
+    cellranger_matrix_to_tibble(tidy = tidy) %>%
+    return()
 }

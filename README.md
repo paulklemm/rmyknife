@@ -34,4 +34,4 @@ options(rmyknife.memoise_path = "<some/other/path>")
 ## ⏳ History
 
 - *2019-11-13*
-  - Added `read_cellranger_feature_bc_matrix` function for reading 10x genomics cellranger data
+  - Added `read_cellranger_feature_bc_matrix` and `read_cellranger_feature_bc_matrix_h5` function for reading 10x genomics cellranger data
