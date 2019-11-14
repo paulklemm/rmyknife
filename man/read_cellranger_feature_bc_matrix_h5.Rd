@@ -5,13 +5,13 @@
 \title{Read Cell Ranger matrix and return a tibble
 Code adapted from https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/matrices#r-load-mat}
 \usage{
-read_cellranger_feature_bc_matrix_h5(h5_path, keep_ensembl_ids = FALSE,
+read_cellranger_feature_bc_matrix_h5(h5_path, use_names = FALSE,
   tidy = TRUE)
 }
 \arguments{
 \item{h5_path}{Path of file}
 
-\item{keep_ensembl_ids}{Keep original ensembl IDs or use clear gene names}
+\item{use_names}{Keep original ensembl IDs or use clear gene names}
 
 \item{tidy}{Return tidy tibble}
 }

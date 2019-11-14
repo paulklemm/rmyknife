@@ -84,11 +84,11 @@ cellranger_matrix_to_tibble <- function(mat, tidy) {
 #' @import Matrix magrittr tidyr
 #' @export
 #' @param h5_path Path of file
-#' @param keep_ensembl_ids Keep original ensembl IDs or use clear gene names
+#' @param use_names Keep original ensembl IDs or use clear gene names
 #' @param tidy Return tidy tibble
 #' @return tibble of resulting matrix
-read_cellranger_feature_bc_matrix_h5 <- function(h5_path, keep_ensembl_ids = FALSE, tidy = TRUE) {
-  Seurat::Read10X_h5(h5_path, use.names = keep_ensembl_ids) %>%
+read_cellranger_feature_bc_matrix_h5 <- function(h5_path, use_names = FALSE, tidy = TRUE) {
+  Seurat::Read10X_h5(h5_path, use.names = use_names) %>%
     cellranger_matrix_to_tibble(tidy = tidy) %>%
     return()
 }
