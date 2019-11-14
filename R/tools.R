@@ -92,3 +92,42 @@ read_cellranger_feature_bc_matrix_h5 <- function(h5_path, use_names = FALSE, tid
     cellranger_matrix_to_tibble(tidy = tidy) %>%
     return()
 }
+
+#' Seurat clustering based on https://satijalab.org/seurat/v3.1/pbmc3k_tutorial.html
+#' @param seurat_data Seurat dataset object
+#' @param max_dimension_used_for_clustering Determines how many principal components are used for clustering
+#' @param cluster_resolution See Seurat::FindClusters resolution parameter. "resolution: Value of the resolution parameter, use a value above (below) 1.0 if you want to obtain a larger (smaller) number of communities."
+#' @import magrittr Seurat
+#' @export
+#' @example
+#' cellatlas::get_campbell_count_data() %>%
+#'   # transform into format that can be read by seurat
+#'   dplyr::select(GeneID, CellID, count) %>%
+#'   tidyr::spread(CellID, count) %>%
+#'   tibble::column_to_rownames("GeneID") %>%
+#'   # Initialize the Seurat object with the raw (non-normalized data)
+#'   Seurat::CreateSeuratObject(
+#'     counts = .,
+#'     min.cells = 3,
+#'     min.features = 200,
+#'     project = "campbell"
+#'   ) %>%
+#'   # Get seurat clustering
+#'   get_seurat_clustering()
+get_seurat_clustering <-
+  function(
+    seurat_data,
+    max_dimension_used_for_clustering = 10,
+    cluster_resolution = 0.8
+  ) {
+  seurat_data %<>%
+    Seurat::NormalizeData() %>%
+    Seurat::FindVariableFeatures() %>%
+    Seurat::ScaleData(., features = rownames(.)) %>%
+    Seurat::RunPCA() %>%
+    # Clustering
+    Seurat::FindNeighbors(dims = 1:max_dimension_used_for_clustering) %>%
+    Seurat::FindClusters(resolution = cluster_resolution) %>%
+    Seurat::RunUMAP(dims = 1:max_dimension_used_for_clustering) %>%
+    return()
+}
