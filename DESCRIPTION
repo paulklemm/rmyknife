@@ -26,4 +26,5 @@ Imports:
     memoise,
     Matrix,
     Seurat,
-    hdf5r
+    hdf5r,
+    GO.db
