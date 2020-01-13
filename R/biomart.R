@@ -336,6 +336,66 @@ get_goterm_name_from_id <- function(go_accession) {
     return()
 }
 
+
+#' Get promotor sequence upstream of a gene flank
+#' @param ensembl_gene_ids genes to get sequence from
+#' @param ensembl biomaRt connection
+#' @param upstream_bases How many bases upstream of the gene start to return
+#' @return tibble with columns gene_flank and ensembl_gene_id
+#' @export
+#' @import tidylog tibble
+#' @examples
+#'    get_promotor_sequence(
+#'      ensembl_gene_ids = c("ENSMUSG00000102693", "ENSMUSG00000064842", "ENSMUSG00000102851"),
+#'      ensembl = rmyknife::get_ensembl_dataset_from_version(94)
+#'    )
+get_promotor_sequence <- function(
+  ensembl_gene_ids,
+  ensembl = get_ensembl_dataset_from_version(97),
+  upstream_bases = 1000
+) {
+  biomaRt::getSequence(
+    id = ensembl_gene_ids,
+    mart = ensembl,
+    type = "ensembl_gene_id",
+    seqType = "gene_flank",
+    upstream = upstream_bases
+  ) %>%
+    tibble::as_tibble() %>%
+    return()
+}
+
+#' Wrapper function for get_promotor_sequence. Attaches the result to a data frame
+#' @param dat tibble with ensembl_gene_id variable
+#' @param ensembl_id_var ensembl id variable. Default is "ensembl_gene_id"
+#' @param ensembl ... from get_promotor_sequence
+#' @param upstream_bases ... from get_promotor_sequence
+#' @return original tibble with column gene_flank added
+#' @export
+#' @import tidylog tibble
+#' @examples
+#'   tibble::tibble(EnsemblIDs = c("ENSMUSG00000102693", "ENSMUSG00000064842", "ENSMUSG00000102851")) %>%
+#'     get_promotor_sequence_tibble(
+#'       ensembl_id_var = "EnsemblIDs"
+#'     )
+get_promotor_sequence_tibble <- function(
+  dat,
+  ensembl_id_var = "ensembl_gene_id",
+  ensembl = get_ensembl_dataset_from_version(97),
+  upstream_bases = 1000
+) {
+  tidylog::left_join(
+    dat,
+    get_promotor_sequence(
+      ensembl_gene_ids = dplyr::select_(dat, ensembl_id_var) %>% dplyr::pull(),
+      upstream_bases = upstream_bases,
+      ensembl = ensembl
+    ),
+    by = setNames("ensembl_gene_id", ensembl_id_var)
+  ) %>%
+    return()
+}
+
 # #' @param dat
 # #' @param ensembl_id_var
 # #' @param attributes
