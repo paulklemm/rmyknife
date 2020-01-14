@@ -11,7 +11,7 @@ attach_ensembl_gene_id_from_entrez_id(dat, entrez_id_var = "entrez_id",
 \arguments{
 \item{dat}{input data frame containing entrez id's}
 
-\item{entrez_id_var}{Entrez id column}
+\item{entrez_id_var}{Entrez id column in character type.}
 
 \item{ensembl}{ensembl database connection object}
 

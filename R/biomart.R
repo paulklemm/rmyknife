@@ -154,7 +154,7 @@ attach_ensembl_gene_id_from_name <- function(
 
 #' Attach Biomart Gene identifier from entrez id
 #' @param dat input data frame containing entrez id's
-#' @param entrez_id_var Entrez id column
+#' @param entrez_id_var Entrez id column in character type.
 #' @param ensembl ensembl database connection object
 #' @param verbose Print summary statistics to check for 1:1 or 1:N mappings
 #'
@@ -181,7 +181,9 @@ attach_ensembl_gene_id_from_entrez_id <- function(
       dplyr::distinct_(entrez_id_var) %>%
       as.list(),
     mart = ensembl
-  ) %>% tibble::as_tibble()
+  ) %>% tibble::as_tibble() %>%
+    dplyr::mutate(entrezgene_id = as.character(entrezgene_id))
+
   # Attach data to biomart output
   dat_result <- dat %>%
     tidylog::left_join(
