@@ -216,8 +216,8 @@ attach_ensembl_gene_id_from_entrez_id <- function(
 #'    test_data <- tibble(
 #'      gene_ids = c("ENSMUSG00000102693", "ENSMUSG00000064842", "ENSMUSG00000102851", "ENSMUSG00000089699", "ENSMUSG00000103147", "ENSMUSG00000102348", "ENSMUSG00000102592", "ENSMUSG00000104238", "ENSMUSG00000102269", "ENSMUSG00000096126"),
 #'      my_id = 1:10
-#'    )
-#'    attach_biomart(test_data, ensembl_id_var = "gene_ids", ensembl_version = 94)
+#'    ) %>%
+#'    attach_biomart(ensembl_id_var = "gene_ids", ensembl_version = 94)
 #'
 #'    test_data_transcripts <- tibble(
 #'      transcripts = c("ENSMUST00000082423", "ENSMUST00000082422", "ENSMUST00000082421", "ENSMUST00000082420", "ENSMUST00000082419", "ENSMUST00000082418", "ENSMUST00000082417", "ENSMUST00000082416", "ENSMUST00000082415", "ENSMUST00000082414"),
@@ -232,7 +232,7 @@ attach_biomart <- function(
     verbose = TRUE
   ) {
   # Check if we have genes or transcripts as input based on the first element
-  type <- dat %>% dplyr::select_(ensembl_id_var) %>%
+  type <- dat %>% dplyr::select(ensembl_id_var) %>%
     head(1) %>%
     stringr::str_match(pattern = "ENS[a-zA-Z]{3}(\\w)") %>%
     # Identifier is the second entry
@@ -253,25 +253,31 @@ attach_biomart <- function(
     paste0("Cannot identify type (gene or transcript) from gene identifier") %>%
       stop()
   }
-  species_id <- dat %>% dplyr::select_(ensembl_id_var) %>%
-    head(1) %>%
+  first_gene_id <- dat %>%
+    dplyr::select(ensembl_id_var) %>%
+    head(1)
+  
+  species_id <- first_gene_id %>%
     stringr::str_match(pattern = "ENS([a-zA-Z]{3})") %>%
     .[2]
-  # Setup the dataset based on species
-  if (species_id == "MUS") {
-    ensembl_dataset <- "mmusculus_gene_ensembl"
-  } else {
-    paste0("Species ", species_id, " not supported") %>%
-      stop()
+  # Test for human gene type. names look like ENSG00000140505
+  if (is.na(species_id)) {
+    if (first_gene_id %>% stringr::str_detect(pattern = "^ENS[GT](\\d*)$")) {
+      species_id <- "HUM"
+    }
   }
+  message(paste0("species_id is ", species_id))
   # Get Ensembl dataset
-  ensembl <- rmyknife::get_ensembl_dataset_from_version(ensembl_version, ensembl_dataset)
+  ensembl <- get_ensembl_dataset_from_version(
+    ensembl_version = ensembl_version,
+    species = species_id
+  )
   # BiomaRt call
   dat_result <- get_memoised(biomaRt::getBM)(
     attributes = attributes,
     filters = filter_type,
     values = dat %>%
-      dplyr::select_(ensembl_id_var) %>%
+      dplyr::select(ensembl_id_var) %>%
       dplyr::distinct_(ensembl_id_var) %>%
       as.list(),
     mart = ensembl
@@ -281,7 +287,7 @@ attach_biomart <- function(
     dplyr::left_join(dat_result, by = setNames(filter_type, ensembl_id_var))
   # Print output statistics when verbose is true
   if (verbose) {
-    paste0("Attaching Biomart gene information to input dataset (n = ", dat %>% nrow(), ", attached_n = ", dat_result %>% nrow(), "). Species is ", ensembl_dataset, ".") %>%
+    paste0("Attaching Biomart gene information to input dataset (n = ", dat %>% nrow(), ", attached_n = ", dat_result %>% nrow(), "). Species is ", ensembl@dataset, ".") %>%
       message()
   }
   dat_result %>%
@@ -344,7 +350,7 @@ get_genes_of_goterm_helper <- function(
 #' @return Tibble with all genes associated with GO-term
 #'
 #' @examples
-#'    get_genes_of_goterm(go_accession = "GO:0006811", ensembl = rmyknife::get_ensembl_dataset_from_version(94, "mmusculus_gene_ensembl"))
+#'    get_genes_of_goterm(go_accession = "GO:0006811", ensembl = rmyknife::get_ensembl_dataset_from_version(94, species = "MUS"))
 get_genes_of_goterm <- function(
   go_accession,
   ensembl,
