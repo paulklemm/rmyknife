@@ -17,8 +17,6 @@ attach_ensembl_gene_id_from_name(dat, gene_name_var = "Gene",
 \item{species}{Species identifier as string}
 
 \item{verbose}{Print summary statistics to check for 1:1 or 1:N mappings}
-
-\item{attributes}{biomart attributes to retrieve}
 }
 \value{
 Tibble of dat with attached biomaRt variables

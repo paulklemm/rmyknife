@@ -109,7 +109,6 @@ get_memoised <- function(func) {
 #' Attach Biomart Gene identifier from gene name
 #' @param dat input data frame containing Gene names
 #' @param gene_name_var Gene name column
-#' @param attributes biomart attributes to retrieve
 #' @param ensembl_version integer of ensembl version
 #' @param species Species identifier as string
 #' @param verbose Print summary statistics to check for 1:1 or 1:N mappings
@@ -132,6 +131,8 @@ attach_ensembl_gene_id_from_name <- function(
   # Setup the dataset based on species
   if (species == "MUS") {
     ensembl_dataset <- "mmusculus_gene_ensembl"
+  } else if (species == "HUM") {
+    ensembl_dataset <- "hsapiens_gene_ensembl"
   } else {
     paste0("Species ", species, " not supported") %>%
       stop()
@@ -150,6 +151,67 @@ attach_ensembl_gene_id_from_name <- function(
   # Attach data to biomart output
   dat_result <- dat %>%
     dplyr::left_join(dat_result, by = setNames("external_gene_name", gene_name_var))
+  # Print output statistics when verbose is true
+  if (verbose) {
+    # Count the number of NA's in the column
+    na_count <- dat_result$ensembl_gene_id %>%
+      is.na() %>%
+      sum()
+    paste0("Attaching Biomart gene information to input dataset (n = ", dat %>% nrow(), ", attached_n = ", dat_result %>% nrow(), ". NA-values in ensembl_gene_id = ", na_count,"). Species is ", ensembl_dataset, ".") %>%
+      message()
+  }
+  dat_result %>%
+    return()
+}
+
+#' Attach Biomart Gene identifier from entrez id
+#' @param dat input data frame containing entrez id's
+#' @param entrez_id_var Entrez id column
+#' @param ensembl_version integer of ensembl version
+#' @param species Species identifier as string ("MUS" or "HUM")
+#' @param verbose Print summary statistics to check for 1:1 or 1:N mappings
+#'
+#' @return Tibble of dat with attached biomaRt variables
+#' @export
+#' @examples
+#'    tibble(
+#'      entrez_gene_ids = c("4496", "4494", "4495", "1544"),
+#'      my_id = 1:4
+#'    ) %>%
+#'    rmyknife::attach_ensembl_gene_id_from_entrez_id(entrez_id_var = "entrez_gene_ids", ensembl_version = 96, species = "HUM")
+#'
+attach_ensembl_gene_id_from_entrez_id <- function(
+  dat,
+  entrez_id_var = "entrez_id",
+  ensembl_version,
+  species = "MUS",
+  verbose = TRUE) {
+  # Setup the dataset based on species
+  if (species == "MUS") {
+    ensembl_dataset <- "mmusculus_gene_ensembl"
+  } else if (species == "HUM") {
+    ensembl_dataset <- "hsapiens_gene_ensembl"
+  } else {
+    paste0("Species ", species, " not supported") %>%
+      stop()
+  }
+  ensembl <- rmyknife::get_ensembl_dataset_from_version(ensembl_version, ensembl_dataset)
+  # BiomaRt call
+  dat_result <- rmyknife::get_memoised(biomaRt::getBM)(
+    attributes = c("ensembl_gene_id", "entrezgene_id"),
+    filters = "entrezgene_id",
+    values = dat %>%
+      dplyr::select_(entrez_id_var) %>%
+      dplyr::distinct_(entrez_id_var) %>%
+      as.list(),
+    mart = ensembl
+  ) %>% tibble::as_tibble()
+  # Attach data to biomart output
+  dat_result <- dat %>%
+    tidylog::left_join(
+      dat_result,
+      by = setNames("entrezgene_id", entrez_id_var)
+    )
   # Print output statistics when verbose is true
   if (verbose) {
     # Count the number of NA's in the column

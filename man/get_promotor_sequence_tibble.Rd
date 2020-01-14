@@ -25,7 +25,7 @@ Wrapper function for get_promotor_sequence. Attaches the result to a data frame
 }
 \examples{
   tibble::tibble(EnsemblIDs = c("ENSMUSG00000102693", "ENSMUSG00000064842", "ENSMUSG00000102851")) \%>\%
-    get_promotor_sequence_add_tibble(
+    get_promotor_sequence_tibble(
       ensembl_id_var = "EnsemblIDs"
     )
 }
