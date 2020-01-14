@@ -109,8 +109,7 @@ get_memoised <- function(func) {
 #' Attach Biomart Gene identifier from gene name
 #' @param dat input data frame containing Gene names
 #' @param gene_name_var Gene name column
-#' @param ensembl_version integer of ensembl version
-#' @param species Species identifier as string
+#' @param ensembl ensembl database connection object
 #' @param verbose Print summary statistics to check for 1:1 or 1:N mappings
 #'
 #' @return Tibble of dat with attached biomaRt variables
@@ -120,24 +119,13 @@ get_memoised <- function(func) {
 #'      gene_ids = c("Vamp8", "Mff", "Cers6", "Adcy3"),
 #'      my_id = 1:4
 #'    ) %>%
-#'    attach_ensembl_gene_id_from_name(gene_name_var = "gene_ids", ensembl_version = 96, species = "MUS")
+#'    attach_ensembl_gene_id_from_name(gene_name_var = "gene_ids")
 #'
 attach_ensembl_gene_id_from_name <- function(
   dat,
   gene_name_var = "Gene",
-  ensembl_version,
-  species = "MUS",
+  ensembl = get_ensembl_dataset_from_version(97, species = "MUS"),
   verbose = TRUE) {
-  # Setup the dataset based on species
-  if (species == "MUS") {
-    ensembl_dataset <- "mmusculus_gene_ensembl"
-  } else if (species == "HUM") {
-    ensembl_dataset <- "hsapiens_gene_ensembl"
-  } else {
-    paste0("Species ", species, " not supported") %>%
-      stop()
-  }
-  ensembl <- rmyknife::get_ensembl_dataset_from_version(ensembl_version, ensembl_dataset)
   # BiomaRt call
   dat_result <- get_memoised(biomaRt::getBM)(
     attributes = c("ensembl_gene_id", "external_gene_name"),
@@ -157,7 +145,7 @@ attach_ensembl_gene_id_from_name <- function(
     na_count <- dat_result$ensembl_gene_id %>%
       is.na() %>%
       sum()
-    paste0("Attaching Biomart gene information to input dataset (n = ", dat %>% nrow(), ", attached_n = ", dat_result %>% nrow(), ". NA-values in ensembl_gene_id = ", na_count,"). Species is ", ensembl_dataset, ".") %>%
+    paste0("Attaching Biomart gene information to input dataset (n = ", dat %>% nrow(), ", attached_n = ", dat_result %>% nrow(), ". NA-values in ensembl_gene_id = ", na_count,"). Species is ", ensembl@dataset, ".") %>%
       message()
   }
   dat_result %>%
@@ -167,8 +155,7 @@ attach_ensembl_gene_id_from_name <- function(
 #' Attach Biomart Gene identifier from entrez id
 #' @param dat input data frame containing entrez id's
 #' @param entrez_id_var Entrez id column
-#' @param ensembl_version integer of ensembl version
-#' @param species Species identifier as string ("MUS" or "HUM")
+#' @param ensembl ensembl database connection object
 #' @param verbose Print summary statistics to check for 1:1 or 1:N mappings
 #'
 #' @return Tibble of dat with attached biomaRt variables
@@ -178,24 +165,13 @@ attach_ensembl_gene_id_from_name <- function(
 #'      entrez_gene_ids = c("4496", "4494", "4495", "1544"),
 #'      my_id = 1:4
 #'    ) %>%
-#'    rmyknife::attach_ensembl_gene_id_from_entrez_id(entrez_id_var = "entrez_gene_ids", ensembl_version = 96, species = "HUM")
+#'    rmyknife::attach_ensembl_gene_id_from_entrez_id(entrez_id_var = "entrez_gene_ids")
 #'
 attach_ensembl_gene_id_from_entrez_id <- function(
   dat,
   entrez_id_var = "entrez_id",
-  ensembl_version,
-  species = "MUS",
+  ensembl = get_ensembl_dataset_from_version(97, species = "MUS"),
   verbose = TRUE) {
-  # Setup the dataset based on species
-  if (species == "MUS") {
-    ensembl_dataset <- "mmusculus_gene_ensembl"
-  } else if (species == "HUM") {
-    ensembl_dataset <- "hsapiens_gene_ensembl"
-  } else {
-    paste0("Species ", species, " not supported") %>%
-      stop()
-  }
-  ensembl <- rmyknife::get_ensembl_dataset_from_version(ensembl_version, ensembl_dataset)
   # BiomaRt call
   dat_result <- rmyknife::get_memoised(biomaRt::getBM)(
     attributes = c("ensembl_gene_id", "entrezgene_id"),
@@ -218,7 +194,7 @@ attach_ensembl_gene_id_from_entrez_id <- function(
     na_count <- dat_result$ensembl_gene_id %>%
       is.na() %>%
       sum()
-    paste0("Attaching Biomart gene information to input dataset (n = ", dat %>% nrow(), ", attached_n = ", dat_result %>% nrow(), ". NA-values in ensembl_gene_id = ", na_count,"). Species is ", ensembl_dataset, ".") %>%
+    paste0("Attaching Biomart gene information to input dataset (n = ", dat %>% nrow(), ", attached_n = ", dat_result %>% nrow(), ". NA-values in ensembl_gene_id = ", na_count,"). Species is ", ensembl@dataset, ".") %>%
       message()
   }
   dat_result %>%
@@ -312,7 +288,7 @@ attach_biomart <- function(
 
 #' Get Ensembl dataset with default parameter
 #' @param ensembl_version Ensembl version you want to get data for
-#' @param ensembl_dataset Species you want to extract
+#' @param species Species you want to extract ("MUS" or "HUM")
 #' @import biomaRt magrittr
 #' @export
 #'
@@ -320,8 +296,18 @@ attach_biomart <- function(
 #'    ensembl <- get_ensembl_dataset_from_version(94, "mmusculus_gene_ensembl")
 get_ensembl_dataset_from_version <- function(
     ensembl_version = 94,
-    ensembl_dataset = "mmusculus_gene_ensembl"
+    species = "MUS"
   ) {
+  # Setup the dataset based on species
+  if (species == "MUS") {
+    ensembl_dataset <- "mmusculus_gene_ensembl"
+  } else if (species == "HUM") {
+    ensembl_dataset <- "hsapiens_gene_ensembl"
+  } else {
+    paste0("Species ", species, " not supported") %>%
+      stop()
+  }
+
   get_memoised(biomaRt::useMart)(
     host = rmyknife::get_ensembl_host_from_version(ensembl_version),
     biomart = 'ENSEMBL_MART_ENSEMBL',
@@ -416,7 +402,7 @@ get_promotor_sequence <- function(
   ensembl = get_ensembl_dataset_from_version(97),
   upstream_bases = 1000
 ) {
-  biomaRt::getSequence(
+  get_memoised(biomaRt::getSequence)(
     id = ensembl_gene_ids,
     mart = ensembl,
     type = "ensembl_gene_id",

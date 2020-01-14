@@ -5,16 +5,15 @@
 \title{Attach Biomart Gene identifier from gene name}
 \usage{
 attach_ensembl_gene_id_from_name(dat, gene_name_var = "Gene",
-  ensembl_version, species = "MUS", verbose = TRUE)
+  ensembl = get_ensembl_dataset_from_version(97, species = "MUS"),
+  verbose = TRUE)
 }
 \arguments{
 \item{dat}{input data frame containing Gene names}
 
 \item{gene_name_var}{Gene name column}
 
-\item{ensembl_version}{integer of ensembl version}
-
-\item{species}{Species identifier as string}
+\item{ensembl}{ensembl database connection object}
 
 \item{verbose}{Print summary statistics to check for 1:1 or 1:N mappings}
 }
@@ -29,6 +28,6 @@ Attach Biomart Gene identifier from gene name
      gene_ids = c("Vamp8", "Mff", "Cers6", "Adcy3"),
      my_id = 1:4
    ) \%>\%
-   attach_ensembl_gene_id_from_name(gene_name_var = "gene_ids", ensembl_version = 96, species = "MUS")
+   attach_ensembl_gene_id_from_name(gene_name_var = "gene_ids")
 
 }

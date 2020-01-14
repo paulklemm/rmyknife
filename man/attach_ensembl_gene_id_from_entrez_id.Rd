@@ -5,16 +5,15 @@
 \title{Attach Biomart Gene identifier from entrez id}
 \usage{
 attach_ensembl_gene_id_from_entrez_id(dat, entrez_id_var = "entrez_id",
-  ensembl_version, species = "MUS", verbose = TRUE)
+  ensembl = get_ensembl_dataset_from_version(97, species = "MUS"),
+  verbose = TRUE)
 }
 \arguments{
 \item{dat}{input data frame containing entrez id's}
 
 \item{entrez_id_var}{Entrez id column}
 
-\item{ensembl_version}{integer of ensembl version}
-
-\item{species}{Species identifier as string ("MUS" or "HUM")}
+\item{ensembl}{ensembl database connection object}
 
 \item{verbose}{Print summary statistics to check for 1:1 or 1:N mappings}
 }
@@ -29,6 +28,6 @@ Attach Biomart Gene identifier from entrez id
      entrez_gene_ids = c("4496", "4494", "4495", "1544"),
      my_id = 1:4
    ) \%>\%
-   rmyknife::attach_ensembl_gene_id_from_entrez_id(entrez_id_var = "entrez_gene_ids", ensembl_version = 96, species = "HUM")
+   rmyknife::attach_ensembl_gene_id_from_entrez_id(entrez_id_var = "entrez_gene_ids")
 
 }

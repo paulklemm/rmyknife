@@ -4,13 +4,12 @@
 \alias{get_ensembl_dataset_from_version}
 \title{Get Ensembl dataset with default parameter}
 \usage{
-get_ensembl_dataset_from_version(ensembl_version = 94,
-  ensembl_dataset = "mmusculus_gene_ensembl")
+get_ensembl_dataset_from_version(ensembl_version = 94, species = "MUS")
 }
 \arguments{
 \item{ensembl_version}{Ensembl version you want to get data for}
 
-\item{ensembl_dataset}{Species you want to extract}
+\item{species}{Species you want to extract ("MUS" or "HUM")}
 }
 \description{
 Get Ensembl dataset with default parameter
