@@ -26,4 +26,8 @@ Get promotor sequence upstream of a gene flank
      ensembl_gene_ids = c("ENSMUSG00000102693", "ENSMUSG00000064842", "ENSMUSG00000102851"),
      ensembl = rmyknife::get_ensembl_dataset_from_version(94)
    )
+   get_promotor_sequence(
+     ensembl_gene_ids = c("ENSG00000140505", "ENSG00000205358", "ENSG00000125144", "ENSG00000198417", "ENSG00000205364", "ENSG00000169715", "ENSG00000187193", "ENSG00000125148"),
+     ensembl = rmyknife::get_ensembl_dataset_from_version(97, species = "HUM")
+   )
 }

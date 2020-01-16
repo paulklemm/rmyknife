@@ -232,11 +232,22 @@ attach_biomart <- function(
     verbose = TRUE
   ) {
   # Check if we have genes or transcripts as input based on the first element
-  type <- dat %>% dplyr::select(ensembl_id_var) %>%
+  type <- dat %>%
+    dplyr::select(ensembl_id_var) %>%
     head(1) %>%
     stringr::str_match(pattern = "ENS[a-zA-Z]{3}(\\w)") %>%
     # Identifier is the second entry
     .[2]
+  # If type is NA, maybe we have human genes that look like ENSG00000140505
+  if (is.na(type)) {
+    type <- dat %>%
+      dplyr::select(ensembl_id_var) %>%
+      head(1) %>%
+      stringr::str_match(pattern = "ENS(\\w)") %>%
+      # Identifier is the second entry
+      .[2]
+  }
+
   verbose_id_text <- ""
   filter_type <- ""
   # Check gene type
@@ -266,7 +277,6 @@ attach_biomart <- function(
       species_id <- "HUM"
     }
   }
-  message(paste0("species_id is ", species_id))
   # Get Ensembl dataset
   ensembl <- get_ensembl_dataset_from_version(
     ensembl_version = ensembl_version,
@@ -405,6 +415,10 @@ get_goterm_name_from_id <- function(go_accession) {
 #'      ensembl_gene_ids = c("ENSMUSG00000102693", "ENSMUSG00000064842", "ENSMUSG00000102851"),
 #'      ensembl = rmyknife::get_ensembl_dataset_from_version(94)
 #'    )
+#'    get_promotor_sequence(
+#'      ensembl_gene_ids = c("ENSG00000140505", "ENSG00000205358", "ENSG00000125144", "ENSG00000198417", "ENSG00000205364", "ENSG00000169715", "ENSG00000187193", "ENSG00000125148"),
+#'      ensembl = rmyknife::get_ensembl_dataset_from_version(97, species = "HUM")
+#'    )
 get_promotor_sequence <- function(
   ensembl_gene_ids,
   ensembl = get_ensembl_dataset_from_version(97),
@@ -432,7 +446,8 @@ get_promotor_sequence <- function(
 #' @examples
 #'   tibble::tibble(EnsemblIDs = c("ENSMUSG00000102693", "ENSMUSG00000064842", "ENSMUSG00000102851")) %>%
 #'     get_promotor_sequence_tibble(
-#'       ensembl_id_var = "EnsemblIDs"
+#'       ensembl_id_var = "EnsemblIDs",
+#'       ensembl = get_ensembl_dataset_from_version(97, species = "MUS")
 #'     )
 get_promotor_sequence_tibble <- function(
   dat,

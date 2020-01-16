@@ -29,8 +29,8 @@ Attach Biomart variables based on either gene or transcript IDs
    test_data <- tibble(
      gene_ids = c("ENSMUSG00000102693", "ENSMUSG00000064842", "ENSMUSG00000102851", "ENSMUSG00000089699", "ENSMUSG00000103147", "ENSMUSG00000102348", "ENSMUSG00000102592", "ENSMUSG00000104238", "ENSMUSG00000102269", "ENSMUSG00000096126"),
      my_id = 1:10
-   )
-   attach_biomart(test_data, ensembl_id_var = "gene_ids", ensembl_version = 94)
+   ) \%>\%
+   attach_biomart(ensembl_id_var = "gene_ids", ensembl_version = 94)
 
    test_data_transcripts <- tibble(
      transcripts = c("ENSMUST00000082423", "ENSMUST00000082422", "ENSMUST00000082421", "ENSMUST00000082420", "ENSMUST00000082419", "ENSMUST00000082418", "ENSMUST00000082417", "ENSMUST00000082416", "ENSMUST00000082415", "ENSMUST00000082414"),
