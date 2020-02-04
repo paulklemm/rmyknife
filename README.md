@@ -33,6 +33,8 @@ options(rmyknife.memoise_path = "<some/other/path>")
 
 ## ⏳ History
 
+- *2020-02-04*
+  - Added `get_genes_of_goterm_godb` function
 - *2019-11-14*
   - Added `get_seurat_clustering` function
 - *2019-11-13*

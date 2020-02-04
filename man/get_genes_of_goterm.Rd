@@ -10,6 +10,8 @@ get_genes_of_goterm(go_accession, ensembl, verbose = TRUE)
 \item{go_accession}{ID of GO term}
 
 \item{ensembl}{Biomart connection}
+
+\item{verbose}{Print summary statistic of the query}
 }
 \value{
 Tibble with all genes associated with GO-term

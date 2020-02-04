@@ -355,6 +355,7 @@ get_genes_of_goterm_helper <- function(
 #' Get genes associated with GO-term based on BiomaRt
 #' @param go_accession ID of GO term
 #' @param ensembl Biomart connection
+#' @param verbose Print summary statistic of the query
 #' @export
 #' @import dplyr biomaRt magrittr
 #' @return Tibble with all genes associated with GO-term
@@ -376,6 +377,48 @@ get_genes_of_goterm <- function(
   }
   go_terms %>%
     return()
+}
+
+#' Get genes associated with GO-term as vector based on GO.db
+#' @param go_accession ID of GO term
+#' @param species Define species, either "HUM" or "MUS"
+#' @param verbose Print summary statistic of the query
+#' @import GO.db tibble AnnotationDbi org.Hs.eg.db org.Mm.eg.db magrittr dplyr
+#' @export
+#' @examples
+#'   get_genes_of_goterm_godb("GO:1900746")
+get_genes_of_goterm_godb <- function(
+  go_accession,
+  species = "MUS",
+  verbose = TRUE
+) {
+  # Check for species
+  if (species == "MUS") {
+    go2allegs <- org.Mm.eg.db::org.Mm.egGO2ALLEGS
+    symbol <- org.Mm.eg.db::org.Mm.egSYMBOL
+  } else if (species == "HUM") {
+    go2allegs <- org.Hs.eg.db::org.Hs.egGO2ALLEGS
+    symbol <- org.Hs.eg.db::org.Hs.egSYMBOL
+  } else {
+    paste0("Species ", species, " not supported") %>%
+      stop()
+  }
+  # Get GOterm genes
+  goterm_genes <- AnnotationDbi::get(go_accession, go2allegs) %>%
+    AnnotationDbi::mget(symbol) %>%
+    unlist() %>%
+    tibble::enframe(name = NULL) %>%
+    dplyr::distinct() %>%
+    dplyr::pull()
+  # Verbose output
+  if (verbose) {
+    go_name <- get_goterm_name_from_id(go_accession)
+    # Print out verbose message
+    paste0("Get genes of GO term ", go_accession, " (", go_name, "): ", goterm_genes %>% length(), " genes found") %>%
+      message()
+  }
+  # Return goterm genes
+  return(goterm_genes)
 }
 
 #' Get GO name.
