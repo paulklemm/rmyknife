@@ -383,6 +383,7 @@ get_genes_of_goterm <- function(
 #' @param go_accession ID of GO term
 #' @param species Define species, either "HUM" or "MUS"
 #' @param verbose Print summary statistic of the query
+#' @param memoised Use memoised function (search for local caches of given parameters)
 #' @import GO.db tibble AnnotationDbi org.Hs.eg.db org.Mm.eg.db magrittr dplyr
 #' @export
 #' @examples
@@ -390,8 +391,37 @@ get_genes_of_goterm <- function(
 get_genes_of_goterm_godb <- function(
   go_accession,
   species = "MUS",
+  verbose = TRUE,
+  memoised = TRUE
+) {
+  # Get memoised version of helper function if required
+  if (memoised) {
+    get_genes_of_goterm_godb_func <- get_memoised(get_genes_of_goterm_godb_helper)
+  } else {
+    get_genes_of_goterm_godb_func <- get_genes_of_goterm_godb_helper
+  }
+
+  get_genes_of_goterm_godb_func(
+    go_accession = go_accession,
+    species = species,
+    verbose = verbose
+  ) %>%
+    return()
+}
+
+#' Get genes associated with GO-term as vector based on GO.db
+#' @param go_accession See get_genes_of_goterm_godb
+#' @param species See get_genes_of_goterm_godb
+#' @param verbose See get_genes_of_goterm_godb
+#' @import GO.db tibble AnnotationDbi org.Hs.eg.db org.Mm.eg.db magrittr dplyr
+#' @examples
+#'   get_genes_of_goterm_godb_helper("GO:1900746")
+get_genes_of_goterm_godb_helper <- function(
+  go_accession,
+  species = "MUS",
   verbose = TRUE
 ) {
+  # Code adapted from https://davetang.org/muse/2011/05/20/extract-gene-names-according-to-go-terms/
   # Check for species
   if (species == "MUS") {
     go2allegs <- org.Mm.eg.db::org.Mm.egGO2ALLEGS

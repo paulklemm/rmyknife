@@ -2,9 +2,10 @@
 % Please edit documentation in R/biomart.R
 \name{get_genes_of_goterm_godb}
 \alias{get_genes_of_goterm_godb}
-\title{Get genes associated with GO-term based on GO.db}
+\title{Get genes associated with GO-term as vector based on GO.db}
 \usage{
-get_genes_of_goterm_godb(go_accession, species = "MUS", verbose = TRUE)
+get_genes_of_goterm_godb(go_accession, species = "MUS", verbose = TRUE,
+  memoised = TRUE)
 }
 \arguments{
 \item{go_accession}{ID of GO term}
@@ -12,9 +13,11 @@ get_genes_of_goterm_godb(go_accession, species = "MUS", verbose = TRUE)
 \item{species}{Define species, either "HUM" or "MUS"}
 
 \item{verbose}{Print summary statistic of the query}
+
+\item{memoised}{Use memoised function (search for local caches of given parameters)}
 }
 \description{
-Get genes associated with GO-term based on GO.db
+Get genes associated with GO-term as vector based on GO.db
 }
 \examples{
   get_genes_of_goterm_godb("GO:1900746")
