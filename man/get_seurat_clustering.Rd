@@ -4,8 +4,11 @@
 \alias{get_seurat_clustering}
 \title{Seurat clustering based on https://satijalab.org/seurat/v3.1/pbmc3k_tutorial.html}
 \usage{
-get_seurat_clustering(seurat_data,
-  max_dimension_used_for_clustering = 10, cluster_resolution = 0.8)
+get_seurat_clustering(
+  seurat_data,
+  max_dimension_used_for_clustering = 10,
+  cluster_resolution = 0.8
+)
 }
 \arguments{
 \item{seurat_data}{Seurat dataset object}

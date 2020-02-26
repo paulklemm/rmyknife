@@ -4,8 +4,7 @@
 \alias{get_gene_name_from_synonym}
 \title{Get gene names from synonyms}
 \usage{
-get_gene_name_from_synonym(gene_name, species = "MUS",
-  keep_missing = TRUE)
+get_gene_name_from_synonym(gene_name, species = "MUS", keep_missing = TRUE)
 }
 \arguments{
 \item{gene_name}{Vector of gene names}

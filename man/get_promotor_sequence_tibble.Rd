@@ -4,9 +4,12 @@
 \alias{get_promotor_sequence_tibble}
 \title{Wrapper function for get_promotor_sequence. Attaches the result to a data frame}
 \usage{
-get_promotor_sequence_tibble(dat, ensembl_id_var = "ensembl_gene_id",
+get_promotor_sequence_tibble(
+  dat,
+  ensembl_id_var = "ensembl_gene_id",
   ensembl = get_ensembl_dataset_from_version(97),
-  upstream_bases = 1000)
+  upstream_bases = 1000
+)
 }
 \arguments{
 \item{dat}{tibble with ensembl_gene_id variable}

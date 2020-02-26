@@ -4,9 +4,12 @@
 \alias{attach_ensembl_gene_id_from_entrez_id}
 \title{Attach Biomart Gene identifier from entrez id}
 \usage{
-attach_ensembl_gene_id_from_entrez_id(dat, entrez_id_var = "entrez_id",
+attach_ensembl_gene_id_from_entrez_id(
+  dat,
+  entrez_id_var = "entrez_id",
   ensembl = get_ensembl_dataset_from_version(97, species = "MUS"),
-  verbose = TRUE)
+  verbose = TRUE
+)
 }
 \arguments{
 \item{dat}{input data frame containing entrez id's}

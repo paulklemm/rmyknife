@@ -311,7 +311,7 @@ attach_biomart <- function(
 #' @export
 #'
 #' @examples
-#'    ensembl <- get_ensembl_dataset_from_version(94, "mmusculus_gene_ensembl")
+#'    ensembl <- get_ensembl_dataset_from_version(94, "MUS")
 get_ensembl_dataset_from_version <- function(
     ensembl_version = 94,
     species = "MUS"

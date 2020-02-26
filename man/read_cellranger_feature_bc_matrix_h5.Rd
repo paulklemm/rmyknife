@@ -5,8 +5,7 @@
 \title{Read Cell Ranger matrix and return a tibble
 Code adapted from https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/matrices#r-load-mat}
 \usage{
-read_cellranger_feature_bc_matrix_h5(h5_path, use_names = FALSE,
-  tidy = TRUE)
+read_cellranger_feature_bc_matrix_h5(h5_path, use_names = FALSE, tidy = TRUE)
 }
 \arguments{
 \item{h5_path}{Path of file}

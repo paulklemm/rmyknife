@@ -15,5 +15,5 @@ get_ensembl_dataset_from_version(ensembl_version = 94, species = "MUS")
 Get Ensembl dataset with default parameter
 }
 \examples{
-   ensembl <- get_ensembl_dataset_from_version(94, "mmusculus_gene_ensembl")
+   ensembl <- get_ensembl_dataset_from_version(94, "MUS")
 }

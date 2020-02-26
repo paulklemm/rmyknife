@@ -4,9 +4,11 @@
 \alias{get_promotor_sequence}
 \title{Get promotor sequence upstream of a gene flank}
 \usage{
-get_promotor_sequence(ensembl_gene_ids,
+get_promotor_sequence(
+  ensembl_gene_ids,
   ensembl = get_ensembl_dataset_from_version(97),
-  upstream_bases = 1000)
+  upstream_bases = 1000
+)
 }
 \arguments{
 \item{ensembl_gene_ids}{genes to get sequence from}

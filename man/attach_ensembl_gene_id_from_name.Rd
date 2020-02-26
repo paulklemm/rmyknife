@@ -4,9 +4,12 @@
 \alias{attach_ensembl_gene_id_from_name}
 \title{Attach Biomart Gene identifier from gene name}
 \usage{
-attach_ensembl_gene_id_from_name(dat, gene_name_var = "Gene",
+attach_ensembl_gene_id_from_name(
+  dat,
+  gene_name_var = "Gene",
   ensembl = get_ensembl_dataset_from_version(97, species = "MUS"),
-  verbose = TRUE)
+  verbose = TRUE
+)
 }
 \arguments{
 \item{dat}{input data frame containing Gene names}

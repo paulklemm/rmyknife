@@ -4,8 +4,12 @@
 \alias{get_genes_of_goterm_godb}
 \title{Get genes associated with GO-term as vector based on GO.db}
 \usage{
-get_genes_of_goterm_godb(go_accession, species = "MUS", verbose = TRUE,
-  memoised = TRUE)
+get_genes_of_goterm_godb(
+  go_accession,
+  species = "MUS",
+  verbose = TRUE,
+  memoised = TRUE
+)
 }
 \arguments{
 \item{go_accession}{ID of GO term}

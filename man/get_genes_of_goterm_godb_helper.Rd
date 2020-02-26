@@ -4,8 +4,7 @@
 \alias{get_genes_of_goterm_godb_helper}
 \title{Get genes associated with GO-term as vector based on GO.db}
 \usage{
-get_genes_of_goterm_godb_helper(go_accession, species = "MUS",
-  verbose = TRUE)
+get_genes_of_goterm_godb_helper(go_accession, species = "MUS", verbose = TRUE)
 }
 \arguments{
 \item{go_accession}{See get_genes_of_goterm_godb}
