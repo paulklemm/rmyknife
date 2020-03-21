@@ -99,7 +99,7 @@ read_cellranger_feature_bc_matrix_h5 <- function(h5_path, use_names = FALSE, tid
 #' @param cluster_resolution See Seurat::FindClusters resolution parameter. "resolution: Value of the resolution parameter, use a value above (below) 1.0 if you want to obtain a larger (smaller) number of communities."
 #' @import magrittr Seurat
 #' @export
-#' @example
+#' @examples
 #' cellatlas::get_campbell_count_data() %>%
 #'   # transform into format that can be read by seurat
 #'   dplyr::select(GeneID, CellID, count) %>%

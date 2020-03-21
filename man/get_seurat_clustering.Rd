@@ -20,3 +20,19 @@ get_seurat_clustering(
 \description{
 Seurat clustering based on https://satijalab.org/seurat/v3.1/pbmc3k_tutorial.html
 }
+\examples{
+cellatlas::get_campbell_count_data() \%>\%
+  # transform into format that can be read by seurat
+  dplyr::select(GeneID, CellID, count) \%>\%
+  tidyr::spread(CellID, count) \%>\%
+  tibble::column_to_rownames("GeneID") \%>\%
+  # Initialize the Seurat object with the raw (non-normalized data)
+  Seurat::CreateSeuratObject(
+    counts = .,
+    min.cells = 3,
+    min.features = 200,
+    project = "campbell"
+  ) \%>\%
+  # Get seurat clustering
+  get_seurat_clustering()
+}
