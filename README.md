@@ -33,6 +33,9 @@ options(rmyknife.memoise_path = "<some/other/path>")
 
 ## ⏳ History
 
+- *2020-03-21*
+  - Add [Remove hack while Ensembl is being transferred #1](https://github.com/paulklemm/rmyknife/issues/1)
+  - Bump version to `0.0.4`
 - *2020-02-04*
   - Added `get_genes_of_goterm_godb` function
 - *2019-11-14*
