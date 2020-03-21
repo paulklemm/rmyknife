@@ -333,6 +333,7 @@ get_ensembl_dataset_from_version <- function(
   #   dataset = ensembl_dataset
   # ) %>%
   biomaRt::useMart(
+    host = "uswest.ensembl.org"
     biomart = "ENSEMBL_MART_ENSEMBL",
     dataset = ensembl_dataset
   ) %>%
