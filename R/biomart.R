@@ -326,9 +326,14 @@ get_ensembl_dataset_from_version <- function(
       stop()
   }
 
-  get_memoised(biomaRt::useMart)(
-    host = rmyknife::get_ensembl_host_from_version(ensembl_version),
-    biomart = 'ENSEMBL_MART_ENSEMBL',
+  warning("At the moment we only use the latest Ensembl Release 99 because of the Ensembl server migration.")
+  # biomaRt::useMart(
+  #   host = rmyknife::get_ensembl_host_from_version(ensembl_version),
+  #   biomart = "ENSEMBL_MART_ENSEMBL",
+  #   dataset = ensembl_dataset
+  # ) %>%
+  biomaRt::useMart(
+    biomart = "ENSEMBL_MART_ENSEMBL",
     dataset = ensembl_dataset
   ) %>%
     return()
