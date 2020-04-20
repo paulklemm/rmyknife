@@ -10,7 +10,7 @@
   toset <- !(names(op.rmyknife) %in% names(op))
   if (any(toset)) options(op.rmyknife[toset])
 
-  if (op.rmyknife$rmyknife.use_memoise) {
+  if (isTRUE(getOption("rmyknife.use_memoise"))) {
     message("Caching biomaRt results to path ", op.rmyknife$rmyknife.memoise_path)
   }
 
