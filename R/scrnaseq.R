@@ -106,3 +106,27 @@ get_seurat_clustering <-
     Seurat::RunUMAP(dims = 1:max_dimension_used_for_clustering) %>%
     return()
 }
+
+
+#' Get cell counts for list of genes
+#' @param seurat_dat Seurat object
+#' @param genes List of genes to extract from Seurat object
+#' @param tidy Return column "gene_id" or make each gene a separate column
+#' @return tibble of counts per cell
+#' @import magrittr Seurat tidyr dplyr tibble
+#' @export
+get_gene_counts_per_cell <- function(seurat_dat, genes, tidy = TRUE) {
+  # Extract the genes from the list of cells
+  dat <- Seurat::GetAssayData(seurat_dat) %>%
+    as.data.frame() %>%
+    tibble::rownames_to_column(var = "gene_id") %>%
+    tibble::as_tibble() %>%
+    tidyr::pivot_longer(-gene_id, names_to = "cell_id", values_to = "count") %>%
+    dplyr::filter(gene_id %in% genes)
+  
+  if (!tidy)
+    # Pivot wider again to make filtering easier
+    dat %<>% tidyr::pivot_wider(names_from = gene_id, values_from = count)
+  
+  return(dat)
+}

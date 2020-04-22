@@ -33,6 +33,9 @@ options(rmyknife.memoise_path = "<some/other/path>")
 
 ## ⏳ History
 
+- *2020-04-22*
+  - Add function `get_gene_counts_per_cell`
+  - Bump version to 0.0.5
 - *2020-03-21*
   - Add [Remove hack while Ensembl is being transferred #1](https://github.com/paulklemm/rmyknife/issues/1)
   - Bump version to `0.0.4`
