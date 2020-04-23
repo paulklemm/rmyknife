@@ -126,7 +126,10 @@ get_gene_counts_per_cell <- function(seurat_dat, genes, tidy = TRUE) {
   
   if (!tidy)
     # Pivot wider again to make filtering easier
-    dat %<>% tidyr::pivot_wider(names_from = gene_id, values_from = count)
+    dat %<>%
+      tidyr::pivot_wider(names_from = gene_id, values_from = count) %>%
+      # Order the columns in the same way as the input vector
+      dplyr::select(tidyselect::all_of(genes))
   
   return(dat)
 }
