@@ -33,6 +33,9 @@ options(rmyknife.memoise_path = "<some/other/path>")
 
 ## ⏳ History
 
+- *2020-04-29*
+  - Add `dt_datatable` function
+  - Bump version to 0.1.0
 - *2020-04-22*
   - Add function `get_gene_counts_per_cell`
   - Bump version to 0.0.5

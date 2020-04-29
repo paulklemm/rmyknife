@@ -22,3 +22,19 @@ read_cufflinks <- function(path) {
     readr::read_tsv() %>%
     return()
 }
+
+#' Print standard DT::datatable with extensions for exporting the data
+#' @import DT magrittr
+#' @export
+#' @param dat Dataframe to print
+dt_datatable <- function(dat) {
+  DT::datatable(
+    data = dat,
+    extensions = "Buttons",
+    options = list(
+      dom = "Bfrtip",
+      buttons = c("copy", "csv", "excel", "pdf", "print")
+    )
+  ) %>%
+    return()
+}
