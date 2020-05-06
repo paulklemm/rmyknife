@@ -38,8 +38,9 @@ get_gene_name_from_synonym <- function(
       org.Mm.eg.db::org.Mm.eg_dbconn(),
       'SELECT * FROM alias, gene_info WHERE alias._id == gene_info._id;'
     ) %>%
+      # There is a duplicated `_id` column which we need to take care of before we can select
+      tibble::as_tibble(.name_repair = "unique") %>%
       dplyr::select(alias_symbol, symbol) %>%
-      tibble::as_tibble() %>%
       dplyr::mutate(alias_symbol = tolower(alias_symbol))
   } else {
     paste0("Species ", species, " not supported") %>%
