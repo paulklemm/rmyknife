@@ -33,6 +33,8 @@ options(rmyknife.memoise_path = "<some/other/path>")
 
 ## ⏳ History
 
+- *2020-05-25*
+  - Add `write_xls` function
 - *2020-04-29*
   - Add `dt_datatable` function
   - Bump version to 0.1.0
