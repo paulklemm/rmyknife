@@ -327,18 +327,25 @@ get_ensembl_dataset_from_version <- function(
       stop()
   }
 
-  warning("At the moment we only use the latest Ensembl Release 99 because of the Ensembl server migration.")
-  # biomaRt::useMart(
-  #   host = rmyknife::get_ensembl_host_from_version(ensembl_version),
-  #   biomart = "ENSEMBL_MART_ENSEMBL",
-  #   dataset = ensembl_dataset
-  # ) %>%
-  biomaRt::useMart(
-    host = "useast.ensembl.org",
-    biomart = "ENSEMBL_MART_ENSEMBL",
-    dataset = ensembl_dataset
-  ) %>%
-    return()
+  # Check if we should use the backup version or not
+  if (isTRUE(getOption("rmyknife.use_biomart_mirror"))) {
+    debug_message("Using biomart mirror host in `get_ensembl_dataset_from_version`")
+    ensembl <- biomaRt::useMart(
+      host = getOption("biomart_mirror_host"),
+      biomart = "ENSEMBL_MART_ENSEMBL",
+      dataset = ensembl_dataset
+    )
+  # Use the standard version
+  } else {
+    debug_message("Using standard biomart host in `get_ensembl_dataset_from_version`")
+    ensembl <- biomaRt::useMart(
+      host = rmyknife::get_ensembl_host_from_version(ensembl_version),
+      biomart = "ENSEMBL_MART_ENSEMBL",
+      dataset = ensembl_dataset
+    )
+  }
+
+  return(ensembl)
 }
 
 #' Get genes associated with GO-term based on BiomaRt

@@ -56,3 +56,11 @@ write_xls <- function(dat, ExcelFileName, SheetNames = filename) {
     SheetNames = sheetnames
   )
 }
+
+#' Print message if rmyknife.verbose is TRUE
+#' @param message Debug message to print
+debug_message <- function(message) {
+  if (isTRUE(getOption("rmyknife.verbose"))) {
+    message(message)
+  }
+}
