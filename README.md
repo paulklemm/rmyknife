@@ -44,13 +44,15 @@ options(
   rmyknife.use_biomart_mirror = TRUE,
   rmyknife.biomart_mirror_host = "useast.ensembl.org"
 )
+
 ```
 
 ## ⏳ History
 
 - *2020-05-25*
   - Add `write_xls` function
-  - Bump version to 0.1.1
+  - Add options `options(rmyknife.use_biomart_mirror = TRUE)`, `options(rmyknife.biomart_mirror_host = "useast.ensembl.org")` and `options(rmyknife.verbose = TRUE)`
+  - Bump version to 0.1.2
 - *2020-04-29*
   - Add `dt_datatable` function
   - Bump version to 0.1.0
