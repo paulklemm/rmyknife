@@ -331,7 +331,7 @@ get_ensembl_dataset_from_version <- function(
   if (isTRUE(getOption("rmyknife.use_biomart_mirror"))) {
     debug_message("Using biomart mirror host in `get_ensembl_dataset_from_version`")
     ensembl <- biomaRt::useMart(
-      host = getOption("biomart_mirror_host"),
+      host = getOption("rmyknife.biomart_mirror_host"),
       biomart = "ENSEMBL_MART_ENSEMBL",
       dataset = ensembl_dataset
     )

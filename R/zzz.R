@@ -18,7 +18,7 @@
   }
   
   if (isTRUE(getOption("rmyknife.use_biomart_mirror"))) {
-    message(paste0("Using biomart mirror ", getOption("biomart_mirror_host"), "\n\n Note that this only uses the latest Ensembl release version"))
+    message(paste0("Using biomart mirror ", getOption("rmyknife.biomart_mirror_host"), "\n\n Note that this only uses the latest Ensembl release version"))
   }
   if (isTRUE(getOption("rmyknife.verbose"))) {
     message("rmyknife verbose is set to TRUE. Use this only for troubleshooting purposes.")
