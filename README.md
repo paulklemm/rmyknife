@@ -53,6 +53,7 @@ options(
   - Add `write_xls` function
   - Add options `options(rmyknife.use_biomart_mirror = TRUE)`, `options(rmyknife.biomart_mirror_host = "useast.ensembl.org")` and `options(rmyknife.verbose = TRUE)`
   - Bump version to 0.1.2
+  - Close [Remove hack while Ensembl is being transferred #1](https://github.com/paulklemm/rmyknife/issues/1)
 - *2020-04-29*
   - Add `dt_datatable` function
   - Bump version to 0.1.0
