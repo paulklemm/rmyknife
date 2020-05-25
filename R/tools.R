@@ -38,3 +38,21 @@ dt_datatable <- function(dat) {
   ) %>%
     return()
 }
+
+#' WriteXLS::WriteXLS() function with sane default parameter
+#' @param dat data frame to export
+#' @param ExcelFileName see WriteXLS::WriteXLS()
+#' @param SheetNames see WriteXLS::WriteXLS()
+#' @export
+#' @import WriteXLS
+write_xls <- function(dat, ExcelFileName, SheetNames = filename) {
+  WriteXLS::WriteXLS(
+    x = dat,
+    ExcelFileName = file.path("low_salmon_gene_counts.xlsx"),
+    AdjWidth = TRUE,
+    AutoFilter = TRUE,
+    BoldHeaderRow = TRUE,
+    FreezeRow = 1,
+    SheetNames = sheetnames
+  )
+}
