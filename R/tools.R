@@ -52,7 +52,7 @@ write_xls <- function(
 ) {
   WriteXLS::WriteXLS(
     x = dat,
-    ExcelFileName = file.path("low_salmon_gene_counts.xlsx"),
+    ExcelFileName = ExcelFileName,
     AdjWidth = TRUE,
     AutoFilter = TRUE,
     BoldHeaderRow = TRUE,
