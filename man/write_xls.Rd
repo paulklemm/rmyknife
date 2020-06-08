@@ -4,7 +4,7 @@
 \alias{write_xls}
 \title{WriteXLS::WriteXLS() function with sane default parameter}
 \usage{
-write_xls(dat, ExcelFileName, SheetNames = filename)
+write_xls(dat, ExcelFileName, SheetNames = basename(ExcelFileName))
 }
 \arguments{
 \item{dat}{data frame to export}
