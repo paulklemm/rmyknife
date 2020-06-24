@@ -49,6 +49,8 @@ options(
 
 ## ⏳ History
 
+- *2020-06-24*
+  - Add `deseq2_result_to_tibble` function for converting deseq2 result objects to a dataframe
 - *2020-05-25*
   - Add `write_xls` function
   - Add options `options(rmyknife.use_biomart_mirror = TRUE)`, `options(rmyknife.biomart_mirror_host = "useast.ensembl.org")` and `options(rmyknife.verbose = TRUE)`

@@ -3,6 +3,7 @@
 export(attach_biomart)
 export(attach_ensembl_gene_id_from_entrez_id)
 export(attach_ensembl_gene_id_from_name)
+export(deseq2_result_to_tibble)
 export(dt_datatable)
 export(get_ensembl_dataset_from_version)
 export(get_ensembl_host_from_version)

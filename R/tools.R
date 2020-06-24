@@ -68,3 +68,19 @@ debug_message <- function(message) {
     message(message)
   }
 }
+
+#' Convert a DESeq2 results object to a tibble
+#' @param dat DESeq2::results object
+#' @param row_name The column name for the DESeq2 results row names
+#' @return tibble of DESeq2 result
+#' @import tibble magrittr
+#' @export
+#' @example
+#'   deseq2_diff <- DESeq2::results(deseq2_ip_wt_vs_input_wt) %>%
+#'     deseq2_result_to_tibble()
+deseq2_result_to_tibble <- function(dat, row_name = "ensembl_gene_id") {
+  dat %>%
+    as.data.frame() %>%
+    tibble::rownames_to_column(row_name) %>%
+    tibble::as_tibble()
+}
