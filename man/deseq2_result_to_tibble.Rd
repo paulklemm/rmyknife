@@ -17,3 +17,7 @@ tibble of DESeq2 result
 \description{
 Convert a DESeq2 results object to a tibble
 }
+\examples{
+  deseq2_diff <- DESeq2::results(deseq2_ip_wt_vs_input_wt) \%>\%
+    deseq2_result_to_tibble()
+}

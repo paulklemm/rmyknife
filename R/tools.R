@@ -75,7 +75,7 @@ debug_message <- function(message) {
 #' @return tibble of DESeq2 result
 #' @import tibble magrittr
 #' @export
-#' @example
+#' @examples
 #'   deseq2_diff <- DESeq2::results(deseq2_ip_wt_vs_input_wt) %>%
 #'     deseq2_result_to_tibble()
 deseq2_result_to_tibble <- function(dat, row_name = "ensembl_gene_id") {

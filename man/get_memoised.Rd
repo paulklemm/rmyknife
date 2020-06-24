@@ -13,3 +13,6 @@ Wrapper function for getting memoised function
 Returns memoised function if option rmyknife.use_memoise is true
 The memoised function will store it's value to getOption("rmyknife.memoise_path")
 }
+\examples{
+  get_memoised(biomaRt::getBM)
+}
