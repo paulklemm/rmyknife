@@ -49,6 +49,9 @@ options(
 
 ## ⏳ History
 
+- *2020-07-02*
+  - Fix minor deprecated calls to avoid warning messages from tibble and dplyr
+  - Bump version to 0.1.4
 - *2020-06-24*
   - Add `deseq2_result_to_tibble` function for converting deseq2 result objects to a dataframe
   - Bump version to 0.1.3

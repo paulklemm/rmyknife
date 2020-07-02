@@ -8,7 +8,7 @@
 #' @param ensembl_version Integer of ensembl_version
 get_ensembl_host_from_version <- function(ensembl_version) {
   url <- biomaRt::listEnsemblArchives() %>%
-    tibble::as.tibble() %>%
+    tibble::as_tibble() %>%
     dplyr::filter(name == paste0('Ensembl ', ensembl_version)) %>%
     .$url %>%
     stringr::str_remove('http://')
@@ -133,8 +133,8 @@ attach_ensembl_gene_id_from_name <- function(
     attributes = c("ensembl_gene_id", "external_gene_name"),
     filters = "external_gene_name",
     values = dat %>%
-      dplyr::select_(gene_name_var) %>%
-      dplyr::distinct_(gene_name_var) %>%
+      dplyr::select(gene_name_var) %>%
+      dplyr::distinct(gene_name_var) %>%
       as.list(),
     mart = ensembl
   ) %>% tibble::as_tibble()
@@ -179,8 +179,8 @@ attach_ensembl_gene_id_from_entrez_id <- function(
     attributes = c("ensembl_gene_id", "entrezgene_id"),
     filters = "entrezgene_id",
     values = dat %>%
-      dplyr::select_(entrez_id_var) %>%
-      dplyr::distinct_(entrez_id_var) %>%
+      dplyr::select(entrez_id_var) %>%
+      dplyr::distinct(entrez_id_var) %>%
       as.list(),
     mart = ensembl
   ) %>% tibble::as_tibble() %>%
@@ -290,10 +290,10 @@ attach_biomart <- function(
     filters = filter_type,
     values = dat %>%
       dplyr::select(ensembl_id_var) %>%
-      dplyr::distinct_(ensembl_id_var) %>%
+      dplyr::distinct(ensembl_id_var) %>%
       as.list(),
     mart = ensembl
-  ) %>% tibble::as.tibble()
+  ) %>% tibble::as_tibble()
   # Attach data to biomart output
   dat_result <- dat %>%
     dplyr::left_join(dat_result, by = setNames(filter_type, ensembl_id_var))
@@ -546,7 +546,7 @@ get_promotor_sequence_tibble <- function(
   tidylog::left_join(
     dat,
     get_promotor_sequence(
-      ensembl_gene_ids = dplyr::select_(dat, ensembl_id_var) %>% dplyr::pull(),
+      ensembl_gene_ids = dplyr::select(dat, ensembl_id_var) %>% dplyr::pull(),
       upstream_bases = upstream_bases,
       ensembl = ensembl
     ),
