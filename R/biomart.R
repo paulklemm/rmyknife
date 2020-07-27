@@ -555,6 +555,107 @@ get_promotor_sequence_tibble <- function(
     return()
 }
 
+#' Get orgdb for species as a string
+#' @param species Either MUS or HUM
+#' @return OrgDB database string
+#' @export
+#' @import magrittr
+get_orgdb_for_species <- function(species = "MUS") {
+  if (species == "MUS") {
+    return("org.Mm.eg.db")
+  } else if (species == "HUM") {
+    return("org.Hs.eg.db")
+  } else {
+    paste0("Species ", species, " not supported") %>%
+      stop()
+  }
+}
+
+#' Gets Entrez IDs and add it to dat
+#'
+#' @export
+#' @import magrittr clusterProfiler org.Mm.eg.db dplyr tibble
+#' @param dat Data frame with ensembl identifier
+#' @param ensembl_id_name Name of column containing the ensembl identifier
+#' @param keep_only_rows_with_entrez Only keep rows for which entrez IDs could be found
+#' @param drop_duplicates Often there is a n:1 relationship between Entrez-IDs and Ensembl-IDs. If this value is true, only keep the first hit
+#' @param species Either MUS or HUM
+#' @examples
+#'   tibble::tibble(
+#'     ensembl_gene_id = c("ENSMUSG00000000001","ENSMUSG00000000003","ENSMUSG00000000028","ENSMUSG00000000031","ENSMUSG00000000037","ENSMUSG00000000049","ENSMUSG00000000056","ENSMUSG00000000058","ENSMUSG00000000078","ENSMUSG00000000085"),
+#'   ) %>%
+#'     rmyknife::ensembl_to_entrez()
+ensembl_to_entrez <- function(
+  dat,
+  ensembl_id_name = "ensembl_gene_id",
+  keep_only_rows_with_entrez = TRUE,
+  drop_duplicates = TRUE,
+  species = "MUS"
+) {
+  org_db <- get_orgdb_for_species(species)
+  # Get the Entrez IDs
+  ens_to_ent <- dat[ensembl_id_name][[1]] %>%
+    clusterProfiler::bitr(
+      fromType = "ENSEMBL",
+      toType = "ENTREZID",
+      OrgDb = org_db
+    ) %>%
+    dplyr::rename(EntrezID = ENTREZID)
+  # Drop duplicates if required
+  if (drop_duplicates) {
+    ens_to_ent <- ens_to_ent %>% dplyr::filter(!duplicated(ENSEMBL))
+  }
+  if (keep_only_rows_with_entrez) {
+    dat %>%
+      dplyr::right_join(
+        ens_to_ent,
+        by = setNames("ENSEMBL", ensembl_id_name)
+      ) %>%
+      tibble::as_tibble() %>%
+      return()
+  } else {
+    dat %>%
+      dplyr::full_join(
+        ens_to_ent,
+        by = setNames("ENSEMBL", ensembl_id_name)
+      ) %>%
+      tibble::as_tibble() %>%
+      return()
+  }
+}
+
+#' Add Gene Symbol from EntrezID
+#'
+#' @export
+#' @import clusterProfiler dplyr magrittr
+#' @param dat data frame with EnzrezID
+#' @param species Either "MUS" or "HUM"
+#' @examples
+#'   tibble::tibble(
+#'     ensembl_gene_id = c("ENSMUSG00000000001","ENSMUSG00000000003","ENSMUSG00000000028","ENSMUSG00000000031","ENSMUSG00000000037","ENSMUSG00000000049","ENSMUSG00000000056","ENSMUSG00000000058","ENSMUSG00000000078","ENSMUSG00000000085"),
+#'   ) %>%
+#'     rmyknife::ensembl_to_entrez() %>%
+#'     rmyknife::attach_gene_symbol_from_entrez()
+attach_gene_symbol_from_entrez <- function(
+  dat,
+  species = "MUS"
+) {
+  if (!('EntrezID' %in% colnames(dat))) {
+    stop('EntrezID not available in data frame')
+  }
+  org_db <- get_orgdb_for_species(species)
+  dat["EntrezID"][[1]] %>%
+    clusterProfiler::bitr(
+      fromType = "ENTREZID",
+      toType = c("SYMBOL"),
+      OrgDb = org_db
+    ) %>%
+    dplyr::rename(EntrezID = ENTREZID, Symbol = SYMBOL) %>%
+    dplyr::right_join(dat) %>%
+    as_tibble() %>%
+    return()
+}
+
 # #' @param dat
 # #' @param ensembl_id_var
 # #' @param attributes

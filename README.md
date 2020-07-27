@@ -49,6 +49,9 @@ options(
 
 ## ⏳ History
 
+- *2020-07-27*
+  - Add `attach_gene_symbol_from_entrez` and `ensembl_to_entrez` from mygo package
+  - Bump version to 0.1.5
 - *2020-07-02*
   - Fix minor deprecated calls to avoid warning messages from tibble and dplyr
   - Bump version to 0.1.4
