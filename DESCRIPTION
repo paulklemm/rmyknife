@@ -30,4 +30,5 @@ Imports:
     hdf5r,
     GO.db,
     tidylog,
-    org.Hs.eg.db
+    org.Hs.eg.db,
+    WriteXLS
