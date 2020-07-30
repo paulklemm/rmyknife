@@ -31,4 +31,5 @@ Imports:
     GO.db,
     tidylog,
     org.Hs.eg.db,
-    WriteXLS
+    WriteXLS,
+    clusterProfiler
