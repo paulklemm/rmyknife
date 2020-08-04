@@ -49,6 +49,9 @@ options(
 
 ## ⏳ History
 
+- *2020-08-04*
+  - Add `get_tempfile_from_url`
+  - Bump version to 0.1.6
 - *2020-07-27*
   - Add `attach_gene_symbol_from_entrez` and `ensembl_to_entrez` from mygo package
   - Bump version to 0.1.5

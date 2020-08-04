@@ -84,3 +84,16 @@ deseq2_result_to_tibble <- function(dat, row_name = "ensembl_gene_id") {
     tibble::rownames_to_column(row_name) %>%
     tibble::as_tibble()
 }
+
+#' Downloads the file in the URL to a temp file and returns it's path
+#' @param url File url
+#' @export
+#' @import tools curl
+#' @return path to temp file
+#' @examples
+#'    get_tempfile_from_url("https://ars.els-cdn.com/content/image/1-s2.0-S0092867419300571-mmc2.xlsx")
+get_tempfile_from_url <- function(url) {
+  temp <- tempfile(fileext = glue::glue(".{tools::file_ext(url)}"))
+  curl::curl_download(url, temp)
+  return(temp)
+}
