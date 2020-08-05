@@ -49,6 +49,9 @@ options(
 
 ## ⏳ History
 
+- *2020-08-05*
+  - Add `print_params` function
+  - Bump version to 0.1.7
 - *2020-08-04*
   - Add `get_tempfile_from_url`
   - Bump version to 0.1.6

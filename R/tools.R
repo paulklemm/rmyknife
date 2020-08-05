@@ -97,3 +97,18 @@ get_tempfile_from_url <- function(url) {
   curl::curl_download(url, temp)
   return(temp)
 }
+
+#' Print params list with knitr
+#' @param pars Parameter list to print
+#' @param omit Character vector with names of parameters that are not printed
+#' @import knitr tibble
+#' @examples
+#'   print_params(rmd_params, "counts")
+print_params <- function(pars, omit = c()) {
+  pars[omit] <- "not displayed"
+  tibble::tibble(
+    name = names(pars),
+    setting = pars[names(pars)]
+  ) %>%
+    knitr::kable()
+}
