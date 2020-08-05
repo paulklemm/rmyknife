@@ -102,6 +102,7 @@ get_tempfile_from_url <- function(url) {
 #' @param pars Parameter list to print
 #' @param omit Character vector with names of parameters that are not printed
 #' @import knitr tibble
+#' @export
 #' @examples
 #'   print_params(rmd_params, "counts")
 print_params <- function(pars, omit = c()) {
