@@ -4,10 +4,12 @@
 \alias{dt_datatable}
 \title{Print standard DT::datatable with extensions for exporting the data}
 \usage{
-dt_datatable(dat)
+dt_datatable(dat, scroll_y)
 }
 \arguments{
 \item{dat}{Dataframe to print}
+
+\item{scroll_y}{Pixel size of data-table size in y}
 }
 \description{
 Print standard DT::datatable with extensions for exporting the data

@@ -27,13 +27,18 @@ read_cufflinks <- function(path) {
 #' @import DT magrittr
 #' @export
 #' @param dat Dataframe to print
-dt_datatable <- function(dat) {
+#' @param scroll_y Pixel size of data-table size in y
+dt_datatable <- function(dat, scroll_y) {
   DT::datatable(
     data = dat,
-    extensions = "Buttons",
+    extensions = c("Scroller", "Buttons"),
     options = list(
       dom = "Bfrtip",
-      buttons = c("copy", "csv", "excel", "pdf", "print")
+      buttons = c("copy", "csv", "excel", "pdf", "print"),
+      scrollX = TRUE,
+       # Makes the table more responsive when it's really big
+      scrollY = scroll_y,
+      scroller = TRUE
     )
   ) %>%
     return()
