@@ -28,7 +28,7 @@ read_cufflinks <- function(path) {
 #' @export
 #' @param dat Dataframe to print
 #' @param scroll_y Pixel size of data-table size in y
-dt_datatable <- function(dat, scroll_y) {
+dt_datatable <- function(dat, scroll_y = 300) {
   DT::datatable(
     data = dat,
     extensions = c("Scroller", "Buttons"),

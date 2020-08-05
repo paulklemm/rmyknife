@@ -4,7 +4,7 @@
 \alias{dt_datatable}
 \title{Print standard DT::datatable with extensions for exporting the data}
 \usage{
-dt_datatable(dat, scroll_y)
+dt_datatable(dat, scroll_y = 300)
 }
 \arguments{
 \item{dat}{Dataframe to print}
