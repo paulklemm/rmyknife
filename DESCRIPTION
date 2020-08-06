@@ -32,4 +32,5 @@ Imports:
     tidylog,
     org.Hs.eg.db,
     WriteXLS,
-    clusterProfiler
+    clusterProfiler,
+    DT
