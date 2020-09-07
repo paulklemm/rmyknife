@@ -126,7 +126,7 @@ get_memoised <- function(func) {
 attach_ensembl_gene_id_from_name <- function(
   dat,
   gene_name_var = "Gene",
-  ensembl = get_ensembl_dataset_from_version(97, species = "MUS"),
+  ensembl = get_ensembl_dataset_from_version(100, species = "MUS"),
   verbose = TRUE) {
   # BiomaRt call
   dat_result <- get_memoised(biomaRt::getBM)(
@@ -172,7 +172,7 @@ attach_ensembl_gene_id_from_name <- function(
 attach_ensembl_gene_id_from_entrez_id <- function(
   dat,
   entrez_id_var = "entrez_id",
-  ensembl = get_ensembl_dataset_from_version(97, species = "MUS"),
+  ensembl = get_ensembl_dataset_from_version(100, species = "MUS"),
   verbose = TRUE) {
   # BiomaRt call
   dat_result <- rmyknife::get_memoised(biomaRt::getBM)(
@@ -505,7 +505,7 @@ get_goterm_name_from_id <- function(go_accession) {
 #'    )
 #'    get_promotor_sequence(
 #'      ensembl_gene_ids = c("ENSG00000140505", "ENSG00000205358", "ENSG00000125144", "ENSG00000198417", "ENSG00000205364", "ENSG00000169715", "ENSG00000187193", "ENSG00000125148"),
-#'      ensembl = rmyknife::get_ensembl_dataset_from_version(97, species = "HUM")
+#'      ensembl = rmyknife::get_ensembl_dataset_from_version(100, species = "HUM")
 #'    )
 get_promotor_sequence <- function(
   ensembl_gene_ids,
@@ -535,7 +535,7 @@ get_promotor_sequence <- function(
 #'   tibble::tibble(EnsemblIDs = c("ENSMUSG00000102693", "ENSMUSG00000064842", "ENSMUSG00000102851")) %>%
 #'     get_promotor_sequence_tibble(
 #'       ensembl_id_var = "EnsemblIDs",
-#'       ensembl = get_ensembl_dataset_from_version(97, species = "MUS")
+#'       ensembl = get_ensembl_dataset_from_version(100, species = "MUS")
 #'     )
 get_promotor_sequence_tibble <- function(
   dat,
