@@ -32,6 +32,7 @@ dt_datatable <- function(dat, scroll_y = 300) {
   DT::datatable(
     data = dat,
     extensions = c("Scroller", "Buttons"),
+    filter = list(position = "top"),
     options = list(
       dom = "Bfrtip",
       buttons = c("copy", "csv", "excel", "pdf", "print"),
