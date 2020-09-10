@@ -516,7 +516,9 @@ get_promotor_sequence <- function(
     id = ensembl_gene_ids,
     mart = ensembl,
     type = "ensembl_gene_id",
-    seqType = "gene_flank",
+    # We probably need "coding_gene_flank"
+    # Source: https://www.bioconductor.org/packages/devel/bioc/vignettes/biomaRt/inst/doc/accessing_ensembl.html#given-a-set-of-entrezgene-identifiers-retrieve-100bp-upstream-promoter-sequences
+    seqType = "coding_gene_flank",
     upstream = upstream_bases
   ) %>%
     tibble::as_tibble() %>%

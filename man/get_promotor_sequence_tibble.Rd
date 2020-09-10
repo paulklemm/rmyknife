@@ -30,6 +30,6 @@ Wrapper function for get_promotor_sequence. Attaches the result to a data frame
   tibble::tibble(EnsemblIDs = c("ENSMUSG00000102693", "ENSMUSG00000064842", "ENSMUSG00000102851")) \%>\%
     get_promotor_sequence_tibble(
       ensembl_id_var = "EnsemblIDs",
-      ensembl = get_ensembl_dataset_from_version(97, species = "MUS")
+      ensembl = get_ensembl_dataset_from_version(100, species = "MUS")
     )
 }

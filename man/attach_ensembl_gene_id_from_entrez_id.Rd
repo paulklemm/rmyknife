@@ -7,7 +7,7 @@
 attach_ensembl_gene_id_from_entrez_id(
   dat,
   entrez_id_var = "entrez_id",
-  ensembl = get_ensembl_dataset_from_version(97, species = "MUS"),
+  ensembl = get_ensembl_dataset_from_version(100, species = "MUS"),
   verbose = TRUE
 )
 }
