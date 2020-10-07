@@ -134,7 +134,7 @@ attach_ensembl_gene_id_from_name <- function(
     filters = "external_gene_name",
     values = dat %>%
       dplyr::select(gene_name_var) %>%
-      dplyr::distinct_(gene_name_var) %>%
+      dplyr::distinct() %>%
       as.list(),
     mart = ensembl
   ) %>% tibble::as_tibble()
@@ -180,7 +180,7 @@ attach_ensembl_gene_id_from_entrez_id <- function(
     filters = "entrezgene_id",
     values = dat %>%
       dplyr::select(entrez_id_var) %>%
-      dplyr::distinct_(entrez_id_var) %>%
+      dplyr::distinct() %>%
       as.list(),
     mart = ensembl
   ) %>% tibble::as_tibble() %>%
@@ -290,7 +290,7 @@ attach_biomart <- function(
     filters = filter_type,
     values = dat %>%
       dplyr::select(ensembl_id_var) %>%
-      dplyr::distinct_(ensembl_id_var) %>%
+      dplyr::distinct() %>%
       as.list(),
     mart = ensembl
   ) %>% tibble::as_tibble()
