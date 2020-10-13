@@ -43,6 +43,8 @@ To still be able to conduct queries, we support alternative hosts which can be s
 options(
   rmyknife.use_biomart_mirror = TRUE,
   rmyknife.biomart_mirror_host = "useast.ensembl.org"
+  # rmyknife.biomart_mirror_host = "uswest.ensembl.org"
+  # rmyknife.biomart_mirror_host = "asia.ensembl.org"
 )
 
 ```
