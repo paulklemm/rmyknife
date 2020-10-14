@@ -41,6 +41,7 @@ To still be able to conduct queries, we support alternative hosts which can be s
 # rmyknife.use_biomart_mirror = TRUE will use "useast.ensembl.org" as default
 # You can specify a custom mirror using rmyknife.biomart_mirror_host
 options(
+  rmyknife.verbose = TRUE,
   rmyknife.use_biomart_mirror = TRUE,
   rmyknife.biomart_mirror_host = "useast.ensembl.org"
   # rmyknife.biomart_mirror_host = "uswest.ensembl.org"
