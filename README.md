@@ -52,6 +52,9 @@ options(
 
 ## ⏳ History
 
+- *2020-10-26*
+  - Remove tidylog dependency
+  - Bump version to 0.1.9
 - *2020-08-05*
   - Add `print_params` function
   - Bump version to 0.1.7
