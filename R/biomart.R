@@ -188,7 +188,7 @@ attach_ensembl_gene_id_from_entrez_id <- function(
 
   # Attach data to biomart output
   dat_result <- dat %>%
-    tidylog::left_join(
+    dplyr::left_join(
       dat_result,
       by = setNames("entrezgene_id", entrez_id_var)
     )
@@ -497,7 +497,7 @@ get_goterm_name_from_id <- function(go_accession) {
 #' @param upstream_bases How many bases upstream of the gene start to return
 #' @return tibble with columns gene_flank and ensembl_gene_id
 #' @export
-#' @import tidylog tibble
+#' @import tibble
 #' @examples
 #'    get_promotor_sequence(
 #'      ensembl_gene_ids = c("ENSMUSG00000102693", "ENSMUSG00000064842", "ENSMUSG00000102851"),
@@ -532,7 +532,7 @@ get_promotor_sequence <- function(
 #' @param upstream_bases ... from get_promotor_sequence
 #' @return original tibble with column gene_flank added
 #' @export
-#' @import tidylog tibble
+#' @import tibble
 #' @examples
 #'   tibble::tibble(EnsemblIDs = c("ENSMUSG00000102693", "ENSMUSG00000064842", "ENSMUSG00000102851")) %>%
 #'     get_promotor_sequence_tibble(
@@ -545,7 +545,7 @@ get_promotor_sequence_tibble <- function(
   ensembl = get_ensembl_dataset_from_version(97),
   upstream_bases = 1000
 ) {
-  tidylog::left_join(
+  dplyr::left_join(
     dat,
     get_promotor_sequence(
       ensembl_gene_ids = dplyr::select(dat, ensembl_id_var) %>% dplyr::pull(),

@@ -29,7 +29,6 @@ Imports:
     Seurat,
     hdf5r,
     GO.db,
-    tidylog,
     org.Hs.eg.db,
     WriteXLS,
     clusterProfiler,
