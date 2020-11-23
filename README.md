@@ -52,6 +52,9 @@ options(
 
 ## ⏳ History
 
+- *2020-11-23*
+  - Fix rare attach_biomart bug
+  - Bump version to 0.1.10
 - *2020-10-26*
   - Remove tidylog dependency
   - Bump version to 0.1.9

@@ -294,6 +294,10 @@ attach_biomart <- function(
       as.list(),
     mart = ensembl
   ) %>% tibble::as_tibble()
+  # Force the keys join keys to be of same type. This is rarely required
+  # For example it can happen with retired genes, that no result is reported with getBM
+  # leading to a ensembl_gene_id column of type lgl (e.g. gene ENSMUSG00000089672)
+  mode(dat_result[filter_type][[1]]) <- mode(dat[ensembl_id_var][[1]])
   # Attach data to biomart output
   dat_result <- dat %>%
     dplyr::left_join(dat_result, by = setNames(filter_type, ensembl_id_var))
