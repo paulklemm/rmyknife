@@ -495,7 +495,7 @@ get_genes_of_goterm_godb_helper <- function(
 #'
 #' @examples
 #'    get_goterm_name_from_id(go_accession = "GO:0032680")
-get_goterm_name_from_id <- function(go_accession) {
+get_goterm_name_from_id_godb <- function(go_accession) {
   # Convert GOterm DB to a tibble we can filter on
   goterm_name <-
     AnnotationDbi::Term(GO.db::GOTERM) %>%
@@ -522,7 +522,7 @@ get_goterm_name_from_id <- function(go_accession) {
 #' 
 #' @examples
 #'    get_goterm_name_from_id_biomart(go_accession = "GO:0032680")
-get_goterm_name_from_id_biomart <- function(
+get_goterm_name_from_id <- function(
   go_accession,
   ensembl = get_ensembl_dataset_from_version(103)
 ) {

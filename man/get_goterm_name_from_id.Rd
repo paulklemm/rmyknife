@@ -2,19 +2,24 @@
 % Please edit documentation in R/biomart.R
 \name{get_goterm_name_from_id}
 \alias{get_goterm_name_from_id}
-\title{DEPRECATED. Get GO name using GO.db}
+\title{Get GO name using biomaRt}
 \usage{
-get_goterm_name_from_id(go_accession)
+get_goterm_name_from_id(
+  go_accession,
+  ensembl = get_ensembl_dataset_from_version(103)
+)
 }
 \arguments{
 \item{go_accession}{GO term id, e.g. "GO:0032680"}
+
+\item{ensembl}{ensembl biomaRt object}
 }
 \value{
 GO-term name
 }
 \description{
-DEPRECATED. Get GO name using GO.db
+Get GO name using biomaRt
 }
 \examples{
-   get_goterm_name_from_id(go_accession = "GO:0032680")
+   get_goterm_name_from_id_biomart(go_accession = "GO:0032680")
 }
