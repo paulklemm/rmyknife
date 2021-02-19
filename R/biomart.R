@@ -354,6 +354,8 @@ get_ensembl_dataset_from_version <- function(
 }
 
 #' Get genes associated with GO-term based on BiomaRt
+#' This will get the genes of the selected GO-term and
+#' *all* child-terms.
 #' @param go_accession ID of GO term
 #' @param ensembl Biomart connection
 #' @import biomaRt tibble
@@ -367,7 +369,7 @@ get_genes_of_goterm_helper <- function(
     values = c(go_accession),
     mart = ensembl
   ) %>%
-    as_tibble() %>%
+    tibble::as_tibble() %>%
     return()
 }
 
@@ -389,7 +391,7 @@ get_genes_of_goterm <- function(
   # go_accession <- "GO:0006811"; ensembl <- rmyknife::get_ensembl_dataset_from_version(94, "mmusculus_gene_ensembl") ; verbose <- TRUE
   go_terms <- get_genes_of_goterm_helper(go_accession, ensembl)
   if (verbose) {
-    go_name <- get_goterm_name_from_id(go_accession)
+    go_name <- get_goterm_name_from_id_biomart(go_accession, ensembl)
     # Print out verbose message
     paste0("Get genes of GO term ", go_accession, " (", go_name, "): ", go_terms %>% nrow(), " genes found") %>%
       message()
@@ -470,23 +472,25 @@ get_genes_of_goterm_godb_helper <- function(
   return(goterm_genes)
 }
 
-#' Get GO name.
+#' DEPRECATED. Get GO name using GO.db
 #' @import biomaRt dplyr GO.db magrittr AnnotationDbi
 #' @export
 #' @param go_accession GO term id, e.g. "GO:0032680"
+#' @return GO-term name
 #'
 #' @examples
 #'    get_goterm_name_from_id(go_accession = "GO:0032680")
 get_goterm_name_from_id <- function(go_accession) {
   # Convert GOterm DB to a tibble we can filter on
-  goterm_name <- AnnotationDbi::Term(GO.db::GOTERM) %>%
+  goterm_name <-
+    AnnotationDbi::Term(GO.db::GOTERM) %>%
     as.list() %>%
     tibble::as_tibble() %>%
-    tidyr::gather(key = "accession", value = "name") %>%
-  # Filter for term
-  dplyr::filter(accession == go_accession)
+    tidyr::pivot_longer(cols = tidyr::everything(), names_to = "accession", values_to = "name") %>%
+    # Filter for term
+    dplyr::filter(accession == go_accession)
   if (goterm_name %>% nrow() != 1) {
-    paste0("Could not find GO-term ", go_accession, " in provided ensembl data") %>%
+    paste0("Could not find GO-term ", go_accession, " in GO.db") %>%
       stop()
   }
   goterm_name %>%
@@ -494,6 +498,35 @@ get_goterm_name_from_id <- function(go_accession) {
     return()
 }
 
+#' Get GO name using biomaRt
+#' @import biomaRt tibble magrittr
+#' @export
+#' @param go_accession GO term id, e.g. "GO:0032680"
+#' @param ensembl ensembl biomaRt object
+#' @return GO-term name
+#' 
+#' @examples
+#'    get_goterm_name_from_id_biomart(go_accession = "GO:0032680")
+get_goterm_name_from_id_biomart <- function(
+  go_accession,
+  ensembl = get_ensembl_dataset_from_version(103)
+) {
+  # BiomaRt call
+  dat_result <-
+    get_memoised(biomaRt::getBM)(
+      attributes = c("go_id", "name_1006"),
+      mart = ensembl
+    ) %>%
+    tibble::as_tibble() %>%
+    dplyr::filter(go_id == go_accession)
+  if (dat_result %>% nrow() != 1) {
+    paste0("Could not find GO-term ", go_accession, " in provided ensembl mart") %>%
+      stop()
+  }
+  dat_result %>%
+    .$name_1006 %>%
+    return()
+}
 
 #' Get promotor sequence upstream of a gene flank
 #' @param ensembl_gene_ids genes to get sequence from

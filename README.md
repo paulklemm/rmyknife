@@ -52,6 +52,9 @@ options(
 
 ## ⏳ History
 
+- *2021-02-19*
+  - Get GO-name based on biomaRt, not GO.db
+  - Bump version to 0.2.0
 - *2020-11-23*
   - Fix rare attach_biomart bug
   - Bump version to 0.1.10

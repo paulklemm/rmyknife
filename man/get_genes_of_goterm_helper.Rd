@@ -2,7 +2,9 @@
 % Please edit documentation in R/biomart.R
 \name{get_genes_of_goterm_helper}
 \alias{get_genes_of_goterm_helper}
-\title{Get genes associated with GO-term based on BiomaRt}
+\title{Get genes associated with GO-term based on BiomaRt
+This will get the genes of the selected GO-term and
+\emph{all} child-terms.}
 \usage{
 get_genes_of_goterm_helper(go_accession, ensembl)
 }
@@ -13,4 +15,6 @@ get_genes_of_goterm_helper(go_accession, ensembl)
 }
 \description{
 Get genes associated with GO-term based on BiomaRt
+This will get the genes of the selected GO-term and
+\emph{all} child-terms.
 }
