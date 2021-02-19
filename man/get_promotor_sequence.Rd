@@ -6,7 +6,7 @@
 \usage{
 get_promotor_sequence(
   ensembl_gene_ids,
-  ensembl = get_ensembl_dataset_from_version(97),
+  ensembl = get_ensembl_dataset_from_version(103),
   upstream_bases = 1000
 )
 }
@@ -26,10 +26,10 @@ Get promotor sequence upstream of a gene flank
 \examples{
    get_promotor_sequence(
      ensembl_gene_ids = c("ENSMUSG00000102693", "ENSMUSG00000064842", "ENSMUSG00000102851"),
-     ensembl = rmyknife::get_ensembl_dataset_from_version(94)
+     ensembl = rmyknife::get_ensembl_dataset_from_version(103)
    )
    get_promotor_sequence(
      ensembl_gene_ids = c("ENSG00000140505", "ENSG00000205358", "ENSG00000125144", "ENSG00000198417", "ENSG00000205364", "ENSG00000169715", "ENSG00000187193", "ENSG00000125148"),
-     ensembl = rmyknife::get_ensembl_dataset_from_version(100, species = "HUM")
+     ensembl = rmyknife::get_ensembl_dataset_from_version(103, species = "HUM")
    )
 }

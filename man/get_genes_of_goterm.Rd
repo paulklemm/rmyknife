@@ -20,5 +20,5 @@ Tibble with all genes associated with GO-term
 Get genes associated with GO-term based on BiomaRt
 }
 \examples{
-   get_genes_of_goterm(go_accession = "GO:0006811", ensembl = rmyknife::get_ensembl_dataset_from_version(94, species = "MUS"))
+   get_genes_of_goterm(go_accession = "GO:0006811", ensembl = rmyknife::get_ensembl_dataset_from_version(103, species = "MUS"))
 }

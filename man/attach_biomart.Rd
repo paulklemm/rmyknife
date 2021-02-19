@@ -8,18 +8,21 @@ attach_biomart(
   dat,
   ensembl_id_var = "ensembl_gene_id",
   attributes = c("description", "gene_biotype", "external_gene_name"),
-  ensembl_version = 94,
+  ensembl = NULL,
+  ensembl_version = 103,
   verbose = TRUE
 )
 }
 \arguments{
-\item{dat}{input data frame containing either ensembl gene or transcript ids}
+\item{dat}{Input data frame containing either ensembl gene or transcript ids}
 
-\item{ensembl_id_var}{name of variable containing the gene/transcript ids}
+\item{ensembl_id_var}{Name of variable containing the gene/transcript ids}
 
-\item{attributes}{biomart attributes to retrieve}
+\item{attributes}{Biomart attributes to retrieve}
 
-\item{ensembl_version}{integer of ensembl version}
+\item{ensembl}{Biomart mart. Providing this overrides ensembl_version}
+
+\item{ensembl_version}{Only required if ensembl not provided. Integer of ensembl version}
 
 \item{verbose}{Print summary statistics to check for 1:1 or 1:N mappings}
 }
@@ -34,11 +37,19 @@ Attach Biomart variables based on either gene or transcript IDs
      gene_ids = c("ENSMUSG00000102693", "ENSMUSG00000064842", "ENSMUSG00000102851", "ENSMUSG00000089699", "ENSMUSG00000103147", "ENSMUSG00000102348", "ENSMUSG00000102592", "ENSMUSG00000104238", "ENSMUSG00000102269", "ENSMUSG00000096126"),
      my_id = 1:10
    ) \%>\%
-   attach_biomart(ensembl_id_var = "gene_ids", ensembl_version = 94)
+   attach_biomart(
+     ensembl_id_var = "gene_ids",
+     ensembl = get_ensembl_dataset_from_version(103)
+
+   test_data <- tibble(
+     gene_ids = c("ENSMUSG00000102693", "ENSMUSG00000064842", "ENSMUSG00000102851", "ENSMUSG00000089699", "ENSMUSG00000103147", "ENSMUSG00000102348", "ENSMUSG00000102592", "ENSMUSG00000104238", "ENSMUSG00000102269", "ENSMUSG00000096126"),
+     my_id = 1:10
+   ) \%>\%
+   attach_biomart(ensembl_id_var = "gene_ids", ensembl_version = 103)
 
    test_data_transcripts <- tibble(
      transcripts = c("ENSMUST00000082423", "ENSMUST00000082422", "ENSMUST00000082421", "ENSMUST00000082420", "ENSMUST00000082419", "ENSMUST00000082418", "ENSMUST00000082417", "ENSMUST00000082416", "ENSMUST00000082415", "ENSMUST00000082414"),
      ids = 1:10
    )
-   attach_biomart(test_data_transcripts, ensembl_id_var = "transcripts", ensembl_version = 92)
+   attach_biomart(test_data_transcripts, ensembl_id_var = "transcripts", ensembl_version = 103)
 }

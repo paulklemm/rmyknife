@@ -1,6 +1,6 @@
 #' Get ensembl host from ensembl_version without 'http://'
 #' Example:
-#'   get_ensembl_host_from_version(92)
+#'   get_ensembl_host_from_version(103)
 #'   [1] "apr2018.archive.ensembl.org"
 #'
 #' @export
@@ -126,7 +126,7 @@ get_memoised <- function(func) {
 attach_ensembl_gene_id_from_name <- function(
   dat,
   gene_name_var = "Gene",
-  ensembl = get_ensembl_dataset_from_version(100, species = "MUS"),
+  ensembl = get_ensembl_dataset_from_version(103, species = "MUS"),
   verbose = TRUE) {
   # BiomaRt call
   dat_result <- get_memoised(biomaRt::getBM)(
@@ -172,7 +172,7 @@ attach_ensembl_gene_id_from_name <- function(
 attach_ensembl_gene_id_from_entrez_id <- function(
   dat,
   entrez_id_var = "entrez_id",
-  ensembl = get_ensembl_dataset_from_version(100, species = "MUS"),
+  ensembl = get_ensembl_dataset_from_version(103, species = "MUS"),
   verbose = TRUE) {
   # BiomaRt call
   dat_result <- rmyknife::get_memoised(biomaRt::getBM)(
@@ -206,10 +206,11 @@ attach_ensembl_gene_id_from_entrez_id <- function(
 }
 
 #' Attach Biomart variables based on either gene or transcript IDs
-#' @param dat input data frame containing either ensembl gene or transcript ids
-#' @param ensembl_id_var name of variable containing the gene/transcript ids
-#' @param attributes biomart attributes to retrieve
-#' @param ensembl_version integer of ensembl version
+#' @param dat Input data frame containing either ensembl gene or transcript ids
+#' @param ensembl_id_var Name of variable containing the gene/transcript ids
+#' @param attributes Biomart attributes to retrieve
+#' @param ensembl Biomart mart. Providing this overrides ensembl_version
+#' @param ensembl_version Only required if ensembl not provided. Integer of ensembl version
 #' @param verbose Print summary statistics to check for 1:1 or 1:N mappings
 #'
 #' @return Tibble of dat with attached biomaRt variables
@@ -219,18 +220,27 @@ attach_ensembl_gene_id_from_entrez_id <- function(
 #'      gene_ids = c("ENSMUSG00000102693", "ENSMUSG00000064842", "ENSMUSG00000102851", "ENSMUSG00000089699", "ENSMUSG00000103147", "ENSMUSG00000102348", "ENSMUSG00000102592", "ENSMUSG00000104238", "ENSMUSG00000102269", "ENSMUSG00000096126"),
 #'      my_id = 1:10
 #'    ) %>%
-#'    attach_biomart(ensembl_id_var = "gene_ids", ensembl_version = 94)
+#'    attach_biomart(
+#'      ensembl_id_var = "gene_ids",
+#'      ensembl = get_ensembl_dataset_from_version(103)
+#'
+#'    test_data <- tibble(
+#'      gene_ids = c("ENSMUSG00000102693", "ENSMUSG00000064842", "ENSMUSG00000102851", "ENSMUSG00000089699", "ENSMUSG00000103147", "ENSMUSG00000102348", "ENSMUSG00000102592", "ENSMUSG00000104238", "ENSMUSG00000102269", "ENSMUSG00000096126"),
+#'      my_id = 1:10
+#'    ) %>%
+#'    attach_biomart(ensembl_id_var = "gene_ids", ensembl_version = 103)
 #'
 #'    test_data_transcripts <- tibble(
 #'      transcripts = c("ENSMUST00000082423", "ENSMUST00000082422", "ENSMUST00000082421", "ENSMUST00000082420", "ENSMUST00000082419", "ENSMUST00000082418", "ENSMUST00000082417", "ENSMUST00000082416", "ENSMUST00000082415", "ENSMUST00000082414"),
 #'      ids = 1:10
 #'    )
-#'    attach_biomart(test_data_transcripts, ensembl_id_var = "transcripts", ensembl_version = 92)
+#'    attach_biomart(test_data_transcripts, ensembl_id_var = "transcripts", ensembl_version = 103)
 attach_biomart <- function(
     dat,
     ensembl_id_var = "ensembl_gene_id",
     attributes = c("description", "gene_biotype", "external_gene_name"),
-    ensembl_version = 94,
+    ensembl = NULL,
+    ensembl_version = 103,
     verbose = TRUE
   ) {
   # Check if we have genes or transcripts as input based on the first element
@@ -279,11 +289,16 @@ attach_biomart <- function(
       species_id <- "HUM"
     }
   }
-  # Get Ensembl dataset
-  ensembl <- get_ensembl_dataset_from_version(
-    ensembl_version = ensembl_version,
-    species = species_id
-  )
+  verbose_mart_text <- "Using user-provided ensembl mart."
+  # Get mart based on information deduced from IDs
+  if (is.null(ensembl)) {
+    verbose_mart_text <- glue::glue("Using mart version {ensembl_version} for species {species_id}.")
+    # Get Ensembl dataset
+    ensembl <- get_ensembl_dataset_from_version(
+      ensembl_version = ensembl_version,
+      species = species_id
+    )
+  }
   # BiomaRt call
   dat_result <- get_memoised(biomaRt::getBM)(
     attributes = attributes,
@@ -303,7 +318,7 @@ attach_biomart <- function(
     dplyr::left_join(dat_result, by = setNames(filter_type, ensembl_id_var))
   # Print output statistics when verbose is true
   if (verbose) {
-    paste0("Attaching Biomart gene information to input dataset (n = ", dat %>% nrow(), ", attached_n = ", dat_result %>% nrow(), "). Species is ", ensembl@dataset, ".") %>%
+    paste0(verbose_mart_text, " Attaching Biomart gene information to input dataset (n = ", dat %>% nrow(), ", attached_n = ", dat_result %>% nrow(), "). Species is ", ensembl@dataset, ".") %>%
       message()
   }
   dat_result %>%
@@ -317,9 +332,9 @@ attach_biomart <- function(
 #' @export
 #'
 #' @examples
-#'    ensembl <- get_ensembl_dataset_from_version(94, "MUS")
+#'    ensembl <- get_ensembl_dataset_from_version(103, "MUS")
 get_ensembl_dataset_from_version <- function(
-    ensembl_version = 94,
+    ensembl_version = 103,
     species = "MUS"
   ) {
   # Setup the dataset based on species
@@ -382,13 +397,13 @@ get_genes_of_goterm_helper <- function(
 #' @return Tibble with all genes associated with GO-term
 #'
 #' @examples
-#'    get_genes_of_goterm(go_accession = "GO:0006811", ensembl = rmyknife::get_ensembl_dataset_from_version(94, species = "MUS"))
+#'    get_genes_of_goterm(go_accession = "GO:0006811", ensembl = rmyknife::get_ensembl_dataset_from_version(103, species = "MUS"))
 get_genes_of_goterm <- function(
   go_accession,
   ensembl,
   verbose = TRUE
 ) {
-  # go_accession <- "GO:0006811"; ensembl <- rmyknife::get_ensembl_dataset_from_version(94, "mmusculus_gene_ensembl") ; verbose <- TRUE
+  # go_accession <- "GO:0006811"; ensembl <- rmyknife::get_ensembl_dataset_from_version(103, "mmusculus_gene_ensembl") ; verbose <- TRUE
   go_terms <- get_genes_of_goterm_helper(go_accession, ensembl)
   if (verbose) {
     go_name <- get_goterm_name_from_id_biomart(go_accession, ensembl)
@@ -538,15 +553,15 @@ get_goterm_name_from_id_biomart <- function(
 #' @examples
 #'    get_promotor_sequence(
 #'      ensembl_gene_ids = c("ENSMUSG00000102693", "ENSMUSG00000064842", "ENSMUSG00000102851"),
-#'      ensembl = rmyknife::get_ensembl_dataset_from_version(94)
+#'      ensembl = rmyknife::get_ensembl_dataset_from_version(103)
 #'    )
 #'    get_promotor_sequence(
 #'      ensembl_gene_ids = c("ENSG00000140505", "ENSG00000205358", "ENSG00000125144", "ENSG00000198417", "ENSG00000205364", "ENSG00000169715", "ENSG00000187193", "ENSG00000125148"),
-#'      ensembl = rmyknife::get_ensembl_dataset_from_version(100, species = "HUM")
+#'      ensembl = rmyknife::get_ensembl_dataset_from_version(103, species = "HUM")
 #'    )
 get_promotor_sequence <- function(
   ensembl_gene_ids,
-  ensembl = get_ensembl_dataset_from_version(97),
+  ensembl = get_ensembl_dataset_from_version(103),
   upstream_bases = 1000
 ) {
   get_memoised(biomaRt::getSequence)(
@@ -574,12 +589,12 @@ get_promotor_sequence <- function(
 #'   tibble::tibble(EnsemblIDs = c("ENSMUSG00000102693", "ENSMUSG00000064842", "ENSMUSG00000102851")) %>%
 #'     get_promotor_sequence_tibble(
 #'       ensembl_id_var = "EnsemblIDs",
-#'       ensembl = get_ensembl_dataset_from_version(100, species = "MUS")
+#'       ensembl = get_ensembl_dataset_from_version(103, species = "MUS")
 #'     )
 get_promotor_sequence_tibble <- function(
   dat,
   ensembl_id_var = "ensembl_gene_id",
-  ensembl = get_ensembl_dataset_from_version(97),
+  ensembl = get_ensembl_dataset_from_version(103),
   upstream_bases = 1000
 ) {
   dplyr::left_join(

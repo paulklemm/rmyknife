@@ -4,7 +4,7 @@
 \alias{get_ensembl_dataset_from_version}
 \title{Get Ensembl dataset with default parameter}
 \usage{
-get_ensembl_dataset_from_version(ensembl_version = 94, species = "MUS")
+get_ensembl_dataset_from_version(ensembl_version = 103, species = "MUS")
 }
 \arguments{
 \item{ensembl_version}{Ensembl version you want to get data for}
@@ -15,5 +15,5 @@ get_ensembl_dataset_from_version(ensembl_version = 94, species = "MUS")
 Get Ensembl dataset with default parameter
 }
 \examples{
-   ensembl <- get_ensembl_dataset_from_version(94, "MUS")
+   ensembl <- get_ensembl_dataset_from_version(103, "MUS")
 }

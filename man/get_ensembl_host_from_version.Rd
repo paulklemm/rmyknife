@@ -4,7 +4,7 @@
 \alias{get_ensembl_host_from_version}
 \title{Get ensembl host from ensembl_version without 'http://'
 Example:
-get_ensembl_host_from_version(92)
+get_ensembl_host_from_version(103)
 \link{1} "apr2018.archive.ensembl.org"}
 \usage{
 get_ensembl_host_from_version(ensembl_version)
@@ -15,6 +15,6 @@ get_ensembl_host_from_version(ensembl_version)
 \description{
 Get ensembl host from ensembl_version without 'http://'
 Example:
-get_ensembl_host_from_version(92)
+get_ensembl_host_from_version(103)
 \link{1} "apr2018.archive.ensembl.org"
 }
