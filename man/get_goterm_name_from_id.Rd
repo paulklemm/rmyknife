@@ -21,5 +21,5 @@ GO-term name
 Get GO name using biomaRt
 }
 \examples{
-   get_goterm_name_from_id_biomart(go_accession = "GO:0032680")
+   get_goterm_name_from_id(go_accession = "GO:0032680")
 }

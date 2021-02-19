@@ -406,7 +406,7 @@ get_genes_of_goterm <- function(
   # go_accession <- "GO:0006811"; ensembl <- rmyknife::get_ensembl_dataset_from_version(103, "mmusculus_gene_ensembl") ; verbose <- TRUE
   go_terms <- get_genes_of_goterm_helper(go_accession, ensembl)
   if (verbose) {
-    go_name <- get_goterm_name_from_id_biomart(go_accession, ensembl)
+    go_name <- get_goterm_name_from_id(go_accession, ensembl)
     # Print out verbose message
     paste0("Get genes of GO term ", go_accession, " (", go_name, "): ", go_terms %>% nrow(), " genes found") %>%
       message()
@@ -478,7 +478,7 @@ get_genes_of_goterm_godb_helper <- function(
     dplyr::pull()
   # Verbose output
   if (verbose) {
-    go_name <- get_goterm_name_from_id(go_accession)
+    go_name <- get_goterm_name_from_id_godb(go_accession)
     # Print out verbose message
     paste0("Get genes of GO term ", go_accession, " (", go_name, "): ", goterm_genes %>% length(), " genes found") %>%
       message()
@@ -494,7 +494,7 @@ get_genes_of_goterm_godb_helper <- function(
 #' @return GO-term name
 #'
 #' @examples
-#'    get_goterm_name_from_id(go_accession = "GO:0032680")
+#'    get_goterm_name_from_id_godb(go_accession = "GO:0032680")
 get_goterm_name_from_id_godb <- function(go_accession) {
   # Convert GOterm DB to a tibble we can filter on
   goterm_name <-
@@ -519,9 +519,9 @@ get_goterm_name_from_id_godb <- function(go_accession) {
 #' @param go_accession GO term id, e.g. "GO:0032680"
 #' @param ensembl ensembl biomaRt object
 #' @return GO-term name
-#' 
+#'
 #' @examples
-#'    get_goterm_name_from_id_biomart(go_accession = "GO:0032680")
+#'    get_goterm_name_from_id(go_accession = "GO:0032680")
 get_goterm_name_from_id <- function(
   go_accession,
   ensembl = get_ensembl_dataset_from_version(103)

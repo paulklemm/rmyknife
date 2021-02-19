@@ -16,5 +16,5 @@ GO-term name
 DEPRECATED. Get GO name using GO.db
 }
 \examples{
-   get_goterm_name_from_id(go_accession = "GO:0032680")
+   get_goterm_name_from_id_godb(go_accession = "GO:0032680")
 }
