@@ -389,6 +389,8 @@ get_genes_of_goterm_helper <- function(
 }
 
 #' Get genes associated with GO-term based on BiomaRt
+#' This will get the genes of the selected GO-term and
+#' *all* child-terms.
 #' @param go_accession ID of GO term
 #' @param ensembl Biomart connection
 #' @param verbose Print summary statistic of the query
