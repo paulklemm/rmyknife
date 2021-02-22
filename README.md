@@ -52,6 +52,9 @@ options(
 
 ## ⏳ History
 
+- *2021-02-22*
+  - Add option to get children of GO-terms
+  - Bump version to 0.2.1
 - *2021-02-19*
   - Get GO-name based on biomaRt, not GO.db
   - Allow custom biomart to be used in `attach_biomart`
