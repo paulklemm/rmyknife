@@ -388,11 +388,26 @@ get_genes_of_goterm_helper <- function(
     return()
 }
 
+#' Get a list of all GO-terms and genes from Biomart
+#' @param ensembl Mart for query
+#' @return tibble with gene-goterm association
+#' @export
+#' @import magrittr tibble
+get_goterms_gene_list <- function(
+  ensembl = get_ensembl_dataset_from_version()
+) {
+  get_memoised(biomaRt::getBM)(
+    attributes = c("ensembl_gene_id", "external_gene_name", "name_1006", "go_id"),
+    mart = ensembl
+  ) %>%
+    tibble::as_tibble() %>%
+    return()
+}
+
 #' Get genes associated with GO-term based on BiomaRt
-#' This will get the genes of the selected GO-term and
-#' *all* child-terms.
 #' @param go_accession ID of GO term
 #' @param ensembl Biomart connection
+#' @param with_children Also get genes of all child GO-terms
 #' @param verbose Print summary statistic of the query
 #' @export
 #' @import dplyr biomaRt magrittr
@@ -403,14 +418,22 @@ get_genes_of_goterm_helper <- function(
 get_genes_of_goterm <- function(
   go_accession,
   ensembl,
+  with_children = TRUE,
   verbose = TRUE
 ) {
-  # go_accession <- "GO:0006811"; ensembl <- rmyknife::get_ensembl_dataset_from_version(103, "mmusculus_gene_ensembl") ; verbose <- TRUE
-  go_terms <- get_genes_of_goterm_helper(go_accession, ensembl)
+  # go_accession <- "GO:0006811"; ensembl <- rmyknife::get_ensembl_dataset_from_version(); verbose <- TRUE; with_children <- TRUE
+  if (with_children) {
+    verbose_children_text <- "(with genes of all child GO-terms)"
+    go_terms <- get_genes_of_goterm_helper(go_accession, ensembl)
+  } else {
+    verbose_children_text <- "(without genes of all child GO-terms)"
+    go_terms <-
+      get_goterms_gene_list(ensembl) %>%
+      dplyr::filter(go_id == go_accession)
+  }
   if (verbose) {
     go_name <- get_goterm_name_from_id(go_accession, ensembl)
-    # Print out verbose message
-    paste0("Get genes of GO term ", go_accession, " (", go_name, "): ", go_terms %>% nrow(), " genes found") %>%
+    glue::glue("Get genes of GO term {go_accession} ({go_name}): {go_terms %>% nrow()} genes found {verbose_children_text}") %>%
       message()
   }
   go_terms %>%

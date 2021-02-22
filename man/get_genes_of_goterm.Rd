@@ -2,16 +2,21 @@
 % Please edit documentation in R/biomart.R
 \name{get_genes_of_goterm}
 \alias{get_genes_of_goterm}
-\title{Get genes associated with GO-term based on BiomaRt
-This will get the genes of the selected GO-term and
-\emph{all} child-terms.}
+\title{Get genes associated with GO-term based on BiomaRt}
 \usage{
-get_genes_of_goterm(go_accession, ensembl, verbose = TRUE)
+get_genes_of_goterm(
+  go_accession,
+  ensembl,
+  with_children = TRUE,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{go_accession}{ID of GO term}
 
 \item{ensembl}{Biomart connection}
+
+\item{with_children}{Also get genes of all child GO-terms}
 
 \item{verbose}{Print summary statistic of the query}
 }
@@ -20,8 +25,6 @@ Tibble with all genes associated with GO-term
 }
 \description{
 Get genes associated with GO-term based on BiomaRt
-This will get the genes of the selected GO-term and
-\emph{all} child-terms.
 }
 \examples{
    get_genes_of_goterm(go_accession = "GO:0006811", ensembl = rmyknife::get_ensembl_dataset_from_version(103, species = "MUS"))
