@@ -52,6 +52,8 @@ options(
 
 ## ⏳ History
 
+- *2021-04-19*
+  - Add `set_ggplot_defaults`. Bump to 0.2.2
 - *2021-02-22*
   - Add option to get children of GO-terms
   - Bump version to 0.2.1

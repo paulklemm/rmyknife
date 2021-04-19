@@ -119,3 +119,24 @@ print_params <- function(pars, omit = c()) {
   ) %>%
     knitr::kable()
 }
+
+#' Set default theme for ggplot2
+#' @export
+set_ggplot_defaults <- function() {
+  ggplot2::theme_set(
+    ggplot2::theme_minimal(
+      base_size = 12
+    )
+  )
+  ggplot2::theme_update(
+    axis.ticks = ggplot2::element_line(color = "grey92"),
+    axis.ticks.length = ggplot2::unit(.5, "lines"),
+    panel.grid.minor = ggplot2::element_blank(),
+    legend.title = ggplot2::element_text(size = 12),
+    legend.text = ggplot2::element_text(color = "grey30"),
+    plot.title = ggplot2::element_text(size = 18, face = "bold"),
+    plot.subtitle = ggplot2::element_text(size = 12, color = "grey30"),
+    plot.caption = ggplot2::element_text(size = 9, margin = ggplot2::margin(t = 15)),
+    plot.title.position = 'plot'
+  )
+}
