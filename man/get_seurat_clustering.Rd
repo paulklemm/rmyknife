@@ -7,7 +7,8 @@
 get_seurat_clustering(
   seurat_data,
   max_dimension_used_for_clustering = 10,
-  cluster_resolution = 0.8
+  cluster_resolution = 0.8,
+  top_variable_features = 2000
 )
 }
 \arguments{
@@ -16,6 +17,8 @@ get_seurat_clustering(
 \item{max_dimension_used_for_clustering}{Determines how many principal components are used for clustering}
 
 \item{cluster_resolution}{See Seurat::FindClusters resolution parameter. "resolution: Value of the resolution parameter, use a value above (below) 1.0 if you want to obtain a larger (smaller) number of communities."}
+
+\item{top_variable_features}{Number of top variable features to use for scaling data}
 }
 \description{
 Seurat clustering based on https://satijalab.org/seurat/v3.1/pbmc3k_tutorial.html

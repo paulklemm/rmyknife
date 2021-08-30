@@ -72,6 +72,7 @@ read_cellranger_feature_bc_matrix_h5 <- function(h5_path, use_names = FALSE, tid
 #' @param seurat_data Seurat dataset object
 #' @param max_dimension_used_for_clustering Determines how many principal components are used for clustering
 #' @param cluster_resolution See Seurat::FindClusters resolution parameter. "resolution: Value of the resolution parameter, use a value above (below) 1.0 if you want to obtain a larger (smaller) number of communities."
+#' @param top_variable_features Number of top variable features to use for scaling data
 #' @import magrittr Seurat
 #' @export
 #' @examples
@@ -93,12 +94,15 @@ get_seurat_clustering <-
   function(
     seurat_data,
     max_dimension_used_for_clustering = 10,
-    cluster_resolution = 0.8
+    cluster_resolution = 0.8,
+    top_variable_features = 2000
   ) {
   seurat_data %<>%
     Seurat::NormalizeData() %>%
-    Seurat::FindVariableFeatures() %>%
-    Seurat::ScaleData(., features = rownames(.)) %>%
+    # We can also use the top-n variable features
+    Seurat::FindVariableFeatures(nfeatures = top_variable_features) %>%
+    # Seurat::ScaleData(., features = rownames(.)) %>%
+    Seurat::ScaleData() %>%
     Seurat::RunPCA() %>%
     # Clustering
     Seurat::FindNeighbors(dims = 1:max_dimension_used_for_clustering) %>%
