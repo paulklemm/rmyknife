@@ -52,6 +52,8 @@ options(
 
 ## ⏳ History
 
+- *2021-09-06*
+  - Add `rnorvegicus` to `get_ensembl_dataset_from_version`. Bump to 0.2.3
 - *2021-04-19*
   - Add `set_ggplot_defaults`. Bump to 0.2.2
 - *2021-02-22*

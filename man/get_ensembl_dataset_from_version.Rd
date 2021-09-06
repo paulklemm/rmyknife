@@ -9,7 +9,7 @@ get_ensembl_dataset_from_version(ensembl_version = 103, species = "MUS")
 \arguments{
 \item{ensembl_version}{Ensembl version you want to get data for}
 
-\item{species}{Species you want to extract ("MUS" or "HUM")}
+\item{species}{Species you want to extract ("MUS", "RNO" or "HUM")}
 }
 \description{
 Get Ensembl dataset with default parameter

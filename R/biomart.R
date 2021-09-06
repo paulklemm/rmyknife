@@ -327,7 +327,7 @@ attach_biomart <- function(
 
 #' Get Ensembl dataset with default parameter
 #' @param ensembl_version Ensembl version you want to get data for
-#' @param species Species you want to extract ("MUS" or "HUM")
+#' @param species Species you want to extract ("MUS", "RNO" or "HUM")
 #' @import biomaRt magrittr
 #' @export
 #'
@@ -342,6 +342,8 @@ get_ensembl_dataset_from_version <- function(
     ensembl_dataset <- "mmusculus_gene_ensembl"
   } else if (species == "HUM") {
     ensembl_dataset <- "hsapiens_gene_ensembl"
+  } else if (species == "RNO") {
+    ensembl_dataset <- "rnorvegicus_gene_ensembl"
   } else {
     paste0("Species ", species, " not supported") %>%
       stop()
