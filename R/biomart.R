@@ -733,6 +733,6 @@ attach_gene_symbol_from_entrez <- function(
     ) %>%
     dplyr::rename(EntrezID = ENTREZID, Symbol = SYMBOL) %>%
     dplyr::right_join(dat) %>%
-    as_tibble() %>%
+    tibble::as_tibble() %>%
     return()
 }
