@@ -27,9 +27,11 @@ read_cufflinks <- function(path) {
 #' @import DT magrittr
 #' @export
 #' @param dat Dataframe to print
+#' @param caption Caption of datatable
 #' @param scroll_y Pixel size of data-table size in y
-dt_datatable <- function(dat, scroll_y = 300) {
+dt_datatable <- function(dat, caption = "", scroll_y = 300) {
   DT::datatable(
+    caption = caption,
     data = dat,
     extensions = c("Scroller", "Buttons"),
     filter = list(position = "top"),
