@@ -1,6 +1,5 @@
 #' Read Cell Ranger matrix and return a tibble
 #' Code adapted from https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/matrices#r-load-mat
-#' @import Matrix magrittr tidyr Seurat hdf5r
 #' @export
 #' @param matrix_dir Path of directory containing the files "matrix.mtx.gz", "features.tsv.gz" and "barcodes.tsv.gz"
 #' @param tidy Return tidy tibble
@@ -56,7 +55,6 @@ cellranger_matrix_to_tibble <- function(mat, tidy) {
 
 #' Read Cell Ranger matrix and return a tibble
 #' Code adapted from https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/matrices#r-load-mat
-#' @import Matrix magrittr tidyr
 #' @export
 #' @param h5_path Path of file
 #' @param use_names Keep original ensembl IDs or use clear gene names
@@ -73,7 +71,6 @@ read_cellranger_feature_bc_matrix_h5 <- function(h5_path, use_names = FALSE, tid
 #' @param max_dimension_used_for_clustering Determines how many principal components are used for clustering
 #' @param cluster_resolution See Seurat::FindClusters resolution parameter. "resolution: Value of the resolution parameter, use a value above (below) 1.0 if you want to obtain a larger (smaller) number of communities."
 #' @param top_variable_features Number of top variable features to use for scaling data
-#' @import magrittr Seurat
 #' @export
 #' @examples
 #' cellatlas::get_campbell_count_data() %>%
@@ -117,7 +114,6 @@ get_seurat_clustering <-
 #' @param genes List of genes to extract from Seurat object
 #' @param tidy Return column "gene_id" or make each gene a separate column
 #' @return tibble of counts per cell
-#' @import magrittr Seurat tidyr dplyr tibble
 #' @export
 get_gene_counts_per_cell <- function(seurat_dat, genes, tidy = TRUE) {
   # Extract the genes from the list of cells

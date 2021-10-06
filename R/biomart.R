@@ -4,7 +4,6 @@
 #'   [1] "apr2018.archive.ensembl.org"
 #'
 #' @export
-#' @import biomaRt magrittr stringr dplyr
 #' @param ensembl_version Integer of ensembl_version
 get_ensembl_host_from_version <- function(ensembl_version) {
   url <- biomaRt::listEnsemblArchives() %>%
@@ -22,7 +21,6 @@ get_ensembl_host_from_version <- function(ensembl_version) {
 
 #' Get gene names from synonyms
 #' @export 
-#' @import tibble dplyr DBI org.Mm.eg.db magrittr
 #' @param gene_name Vector of gene names
 #' @param species Define species. Default is "MUS"
 #' @param keep_missing If we cannot identify a gene, still keep the original name?
@@ -93,7 +91,6 @@ get_gene_name_from_synonym <- function(
 #' Wrapper function for getting memoised function
 #' Returns memoised function if option rmyknife.use_memoise is true
 #' The memoised function will store it's value to getOption("rmyknife.memoise_path")
-#' @import biomaRt memoise
 #' @export
 #' @examples
 #'   get_memoised(biomaRt::getBM)
@@ -328,7 +325,6 @@ attach_biomart <- function(
 #' Get Ensembl dataset with default parameter
 #' @param ensembl_version Ensembl version you want to get data for
 #' @param species Species you want to extract ("MUS", "RNO" or "HUM")
-#' @import biomaRt magrittr
 #' @export
 #'
 #' @examples
@@ -375,7 +371,6 @@ get_ensembl_dataset_from_version <- function(
 #' *all* child-terms.
 #' @param go_accession ID of GO term
 #' @param ensembl Biomart connection
-#' @import biomaRt tibble
 get_genes_of_goterm_helper <- function(
   go_accession,
   ensembl
@@ -394,7 +389,6 @@ get_genes_of_goterm_helper <- function(
 #' @param ensembl Mart for query
 #' @return tibble with gene-goterm association
 #' @export
-#' @import magrittr tibble
 get_goterms_gene_list <- function(
   ensembl = get_ensembl_dataset_from_version()
 ) {
@@ -412,7 +406,6 @@ get_goterms_gene_list <- function(
 #' @param with_children Also get genes of all child GO-terms
 #' @param verbose Print summary statistic of the query
 #' @export
-#' @import dplyr biomaRt magrittr
 #' @return Tibble with all genes associated with GO-term
 #'
 #' @examples
@@ -447,7 +440,6 @@ get_genes_of_goterm <- function(
 #' @param species Define species, either "HUM" or "MUS"
 #' @param verbose Print summary statistic of the query
 #' @param memoised Use memoised function (search for local caches of given parameters)
-#' @import GO.db tibble AnnotationDbi org.Hs.eg.db org.Mm.eg.db magrittr dplyr
 #' @export
 #' @examples
 #'   get_genes_of_goterm_godb("GO:1900746")
@@ -476,7 +468,6 @@ get_genes_of_goterm_godb <- function(
 #' @param go_accession See get_genes_of_goterm_godb
 #' @param species See get_genes_of_goterm_godb
 #' @param verbose See get_genes_of_goterm_godb
-#' @import GO.db tibble AnnotationDbi org.Hs.eg.db org.Mm.eg.db magrittr dplyr
 #' @examples
 #'   get_genes_of_goterm_godb_helper("GO:1900746")
 get_genes_of_goterm_godb_helper <- function(
@@ -515,7 +506,6 @@ get_genes_of_goterm_godb_helper <- function(
 }
 
 #' DEPRECATED. Get GO name using GO.db
-#' @import biomaRt dplyr GO.db magrittr AnnotationDbi
 #' @export
 #' @param go_accession GO term id, e.g. "GO:0032680"
 #' @return GO-term name
@@ -541,7 +531,6 @@ get_goterm_name_from_id_godb <- function(go_accession) {
 }
 
 #' Get GO name using biomaRt
-#' @import biomaRt tibble magrittr
 #' @export
 #' @param go_accession GO term id, e.g. "GO:0032680"
 #' @param ensembl ensembl biomaRt object
@@ -576,7 +565,6 @@ get_goterm_name_from_id <- function(
 #' @param upstream_bases How many bases upstream of the gene start to return
 #' @return tibble with columns gene_flank and ensembl_gene_id
 #' @export
-#' @import tibble
 #' @examples
 #'    get_promotor_sequence(
 #'      ensembl_gene_ids = c("ENSMUSG00000102693", "ENSMUSG00000064842", "ENSMUSG00000102851"),
@@ -611,7 +599,6 @@ get_promotor_sequence <- function(
 #' @param upstream_bases ... from get_promotor_sequence
 #' @return original tibble with column gene_flank added
 #' @export
-#' @import tibble
 #' @examples
 #'   tibble::tibble(EnsemblIDs = c("ENSMUSG00000102693", "ENSMUSG00000064842", "ENSMUSG00000102851")) %>%
 #'     get_promotor_sequence_tibble(
@@ -640,7 +627,6 @@ get_promotor_sequence_tibble <- function(
 #' @param species Either MUS or HUM
 #' @return OrgDB database string
 #' @export
-#' @import magrittr
 get_orgdb_for_species <- function(species = "MUS") {
   if (species == "MUS") {
     return("org.Mm.eg.db")
@@ -655,7 +641,6 @@ get_orgdb_for_species <- function(species = "MUS") {
 #' Gets Entrez IDs and add it to dat
 #'
 #' @export
-#' @import magrittr clusterProfiler org.Mm.eg.db dplyr tibble
 #' @param dat Data frame with ensembl identifier
 #' @param ensembl_id_name Name of column containing the ensembl identifier
 #' @param keep_only_rows_with_entrez Only keep rows for which entrez IDs could be found
@@ -708,7 +693,6 @@ ensembl_to_entrez <- function(
 #' Add Gene Symbol from EntrezID
 #'
 #' @export
-#' @import clusterProfiler dplyr magrittr
 #' @param dat data frame with EnzrezID
 #' @param species Either "MUS" or "HUM"
 #' @examples

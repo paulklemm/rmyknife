@@ -1,7 +1,6 @@
 #' Read in GTF file
 #'
 #' @param path Path to GTF file
-#' @import magrittr rtracklayer tibble
 #' @export
 #' @return Tibble of GTF file
 read_gtf <- function(path) {
@@ -14,7 +13,6 @@ read_gtf <- function(path) {
 #' Read in data from cufflinks tsv
 #'
 #' @param path Path to cufflinks tsv file
-#' @import readr magrittr
 #' @export
 #' @return Tibble of cufflinks data
 read_cufflinks <- function(path) {
@@ -24,7 +22,6 @@ read_cufflinks <- function(path) {
 }
 
 #' Print standard DT::datatable with extensions for exporting the data
-#' @import DT magrittr
 #' @export
 #' @param dat Dataframe to print
 #' @param caption Caption of datatable
@@ -52,7 +49,6 @@ dt_datatable <- function(dat, caption = "", scroll_y = 300) {
 #' @param ExcelFileName see WriteXLS::WriteXLS()
 #' @param SheetNames see WriteXLS::WriteXLS()
 #' @export
-#' @import WriteXLS
 write_xls <- function(
   dat,
   ExcelFileName,
@@ -81,7 +77,6 @@ debug_message <- function(message) {
 #' @param dat DESeq2::results object
 #' @param row_name The column name for the DESeq2 results row names
 #' @return tibble of DESeq2 result
-#' @import tibble magrittr
 #' @export
 #' @examples
 #'   deseq2_diff <- DESeq2::results(deseq2_ip_wt_vs_input_wt) %>%
@@ -96,7 +91,6 @@ deseq2_result_to_tibble <- function(dat, row_name = "ensembl_gene_id") {
 #' Downloads the file in the URL to a temp file and returns it's path
 #' @param url File url
 #' @export
-#' @import tools curl
 #' @return path to temp file
 #' @examples
 #'    get_tempfile_from_url("https://ars.els-cdn.com/content/image/1-s2.0-S0092867419300571-mmc2.xlsx")
@@ -109,7 +103,6 @@ get_tempfile_from_url <- function(url) {
 #' Print params list with knitr
 #' @param pars Parameter list to print
 #' @param omit Character vector with names of parameters that are not printed
-#' @import knitr tibble
 #' @export
 #' @examples
 #'   print_params(rmd_params, "counts")
