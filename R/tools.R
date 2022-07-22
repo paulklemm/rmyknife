@@ -135,3 +135,56 @@ set_ggplot_defaults <- function() {
     plot.title.position = 'plot'
   )
 }
+
+#' Volcano plot using data frame containing columns `log2FoldChange` and `padj``
+#' 
+#' @param dat data frame containing columns `log2FoldChange` and `padj`
+#' @param min_padj Minimum p-value cutoff
+#' @param min_log2fc Minimum log2fc cutoff
+#' @param label_top_n Top-n genes to label
+#' @export
+plot_volcano <- function(
+  dat,
+  min_padj = 0.05,
+  min_log2fc = 1,
+  label_top_n = 10
+) {
+  dat %>%
+    # Remove entries that cannot be drawn
+    dplyr::filter(!is.na(padj) & !is.na(log2FoldChange)) %>%
+    ggplot2::ggplot(
+      mapping = ggplot2::aes(
+        x = log2FoldChange,
+        y = -log10(padj),
+        color = ((padj <= min_padj & log2FoldChange >= min_log2fc) | (padj <= min_padj & log2FoldChange <= -min_log2fc)) %>% ifelse(., "significant", "not significant")
+      )
+    ) +
+    ggplot2::geom_point(
+      alpha = 0.3,
+      size = 0.5
+    ) +
+    ggplot2::scale_color_manual(values = c("grey", "blue")) +
+    ggplot2::xlab(expression(log[2](fc))) +
+    ggplot2::ylab(expression(-log[10](adjusted ~ p ~ value))) +
+    ggplot2::labs(colour = "Significance") +
+    ggplot2::theme_minimal() +
+    ggrepel::geom_text_repel(
+      data = . %>%
+        dplyr::arrange(padj) %>%
+        head(label_top_n),
+      mapping = ggplot2::aes(label = external_gene_name),
+      size = 3
+    ) +
+    ggplot2::geom_hline(
+      yintercept = -log10(min_padj),
+      linetype = "dotted"
+    ) +
+    ggplot2::geom_vline(
+      xintercept = -min_log2fc,
+      linetype = "dotted"
+    ) +
+    ggplot2::geom_vline(
+      xintercept = min_log2fc,
+      linetype = "dotted"
+    )
+}

@@ -52,6 +52,8 @@ options(
 
 ## ⏳ History
 
+- *2022-07-22*
+  - Add `plot_volcano`. Bump to 0.2.4
 - *2021-09-06*
   - Add `rnorvegicus` to `get_ensembl_dataset_from_version`. Bump to 0.2.3
 - *2021-04-19*
