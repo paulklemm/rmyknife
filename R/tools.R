@@ -149,24 +149,46 @@ plot_volcano <- function(
   min_log2fc = 1,
   label_top_n = 10
 ) {
-  dat %>%
+  # Attach significance
+  dat <-
+    dat %>%
+    dplyr::mutate(
+      significance =
+        (
+          (padj <= min_padj & log2FoldChange >= min_log2fc) |
+          (padj <= min_padj & log2FoldChange <= -min_log2fc)
+        ) %>%
+          ifelse(., "significant", "not significant")
+    )
+  
+  volcanoplot <-
+    dat %>%
     # Remove entries that cannot be drawn
     dplyr::filter(!is.na(padj) & !is.na(log2FoldChange)) %>%
     ggplot2::ggplot(
       mapping = ggplot2::aes(
         x = log2FoldChange,
         y = -log10(padj),
-        color = ((padj <= min_padj & log2FoldChange >= min_log2fc) | (padj <= min_padj & log2FoldChange <= -min_log2fc)) %>% ifelse(., "significant", "not significant")
+        color = significance
       )
     ) +
     ggplot2::geom_point(
       alpha = 0.3,
       size = 0.5
     ) +
-    ggplot2::scale_color_manual(values = c("grey", "blue")) +
     ggplot2::xlab(expression(log[2](fc))) +
     ggplot2::ylab(expression(-log[10](adjusted ~ p ~ value))) +
-    ggplot2::labs(colour = "Significance") +
+    ggplot2::labs(colour =
+      paste0(
+        "Significance\npadj = ",
+        min_padj,
+        "\nl2fc = ± ",
+        min_log2fc,
+        "(",
+        round(2^min_log2fc, digits = 2),
+        "-fold)"
+      )
+    ) +
     ggplot2::theme_minimal() +
     ggrepel::geom_text_repel(
       data = . %>%
@@ -187,4 +209,23 @@ plot_volcano <- function(
       xintercept = min_log2fc,
       linetype = "dotted"
     )
+  
+  # Apply proper coloring
+  significance_summary <-
+    dat %>%
+    dplyr::distinct(significance)
+  if(nrow(significance_summary) > 1) {
+    volcanoplot <-
+      volcanoplot +
+      ggplot2::scale_color_manual(values = c("grey", "blue"))
+  } else if(dplyr::pull(significance_summary) == "significant") {
+    volcanoplot <-
+      volcanoplot +
+      ggplot2::scale_color_manual(values = "blue")
+  } else {
+    volcanoplot <-
+      volcanoplot +
+      ggplot2::scale_color_manual(values = "grey")
+  }
+  return(volcanoplot)
 }
