@@ -186,7 +186,7 @@ plot_volcano <- function(
         min_log2fc,
         "(",
         round(2^min_log2fc, digits = 2),
-        "-fold)"
+        " ratio)"
       )
     ) +
     ggplot2::theme_minimal() +
