@@ -52,6 +52,8 @@ options(
 
 ## ⏳ History
 
+- *2022-08-15*
+  - Add `highlight` parameter to `plot_volcano`. Bump to 0.2.5
 - *2022-07-22*
   - Add `plot_volcano`. Bump to 0.2.4
 - *2021-09-06*

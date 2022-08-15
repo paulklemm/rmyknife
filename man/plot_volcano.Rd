@@ -2,19 +2,27 @@
 % Please edit documentation in R/tools.R
 \name{plot_volcano}
 \alias{plot_volcano}
-\title{Volcano plot using data frame containing columns \code{log2FoldChange} and `padj``}
+\title{Volcano plot using data frame containing columns \code{log2FoldChange}, \code{padj} and \code{external_gene_name}}
 \usage{
-plot_volcano(dat, min_padj = 0.05, min_log2fc = 1, label_top_n = 10)
+plot_volcano(
+  dat,
+  min_padj = 0.05,
+  min_log2fc = 1,
+  label_top_n = 10,
+  highlight = c()
+)
 }
 \arguments{
-\item{dat}{data frame containing columns \code{log2FoldChange} and \code{padj}}
+\item{dat}{data frame containing columns \code{log2FoldChange}, \code{padj} and \code{external_gene_name}}
 
 \item{min_padj}{Minimum p-value cutoff}
 
 \item{min_log2fc}{Minimum log2fc cutoff}
 
 \item{label_top_n}{Top-n genes to label}
+
+\item{highlight}{Vector of \code{external_gene_name} to highlight}
 }
 \description{
-Volcano plot using data frame containing columns \code{log2FoldChange} and `padj``
+Volcano plot using data frame containing columns \code{log2FoldChange}, \code{padj} and \code{external_gene_name}
 }

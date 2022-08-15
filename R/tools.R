@@ -136,18 +136,20 @@ set_ggplot_defaults <- function() {
   )
 }
 
-#' Volcano plot using data frame containing columns `log2FoldChange` and `padj``
+#' Volcano plot using data frame containing columns `log2FoldChange`, `padj` and `external_gene_name`
 #' 
-#' @param dat data frame containing columns `log2FoldChange` and `padj`
+#' @param dat data frame containing columns `log2FoldChange`, `padj` and `external_gene_name`
 #' @param min_padj Minimum p-value cutoff
 #' @param min_log2fc Minimum log2fc cutoff
 #' @param label_top_n Top-n genes to label
+#' @param highlight Vector of `external_gene_name` to highlight
 #' @export
 plot_volcano <- function(
   dat,
   min_padj = 0.05,
   min_log2fc = 1,
-  label_top_n = 10
+  label_top_n = 10,
+  highlight = c()
 ) {
   # Attach significance
   dat <-
@@ -192,10 +194,27 @@ plot_volcano <- function(
     ggplot2::theme_minimal() +
     ggrepel::geom_text_repel(
       data = . %>%
+        # Highlighted genes are drawn separately, remove them here
+        dplyr::filter(!(external_gene_name %in% highlight)) %>%
         dplyr::arrange(padj) %>%
         head(label_top_n),
       mapping = ggplot2::aes(label = external_gene_name),
       size = 3
+    ) +
+    # Highlight points
+    ggplot2::geom_point(
+      data = . %>%
+        dplyr::filter(external_gene_name %in% highlight),
+      alpha = 1,
+      size = 0.8,
+      color = "red"
+    ) +
+    # Highlight names
+    ggrepel::geom_text_repel(
+      data = . %>%
+        dplyr::filter(external_gene_name %in% highlight),
+      mapping = ggplot2::aes(label = external_gene_name),
+      color = "red"
     ) +
     ggplot2::geom_hline(
       yintercept = -log10(min_padj),
