@@ -52,6 +52,9 @@ options(
 
 ## ⏳ History
 
+- *2022-09-28*
+  - Add `get_gzipped_stream`, `get_uniprot` and `get_uniprot_with_ensembl`
+  - Bump to 0.2.6
 - *2022-08-15*
   - Add `highlight` parameter to `plot_volcano`. Bump to 0.2.5
 - *2022-07-22*

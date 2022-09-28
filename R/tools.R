@@ -248,3 +248,18 @@ plot_volcano <- function(
   }
   return(volcanoplot)
 }
+
+#' Get stream for gzipped content
+#' @param url Url to call
+#' @return stream for piping to read functions
+#' @export
+#' @examples
+#' "https://rest.uniprot.org/uniprotkb/stream?compressed=true&fields=accession%2Creviewed%2Cid%2Cprotein_name%2Cgene_names%2Corganism_name&format=tsv&query=%28G-coupled%20coupled%20receptor%29%20AND%20%28model_organism%3A10090%29" %>%
+#'    url() %>%
+#'    gzcon() %>%
+#'    readr::read_tsv()
+get_gzipped_stream <- function(url) {
+  url %>%
+    url() %>%
+    gzcon()
+}

@@ -720,3 +720,115 @@ attach_gene_symbol_from_entrez <- function(
     tibble::as_tibble() %>%
     return()
 }
+
+#' Helper function for constructing uniprot API call
+#' @param search_string Search Uniprot database for genes matching this search
+#' @param species Either "HUM" or "MUS". Leave empty for pulling all species
+#' @param verbose Print status messages
+#' @export
+get_uniprot <- function(
+  search_string,
+  species = "MUS",
+  verbose = TRUE
+) {
+  
+  # search_string <- "G-protein coupled receptor"
+  # species <- "MUS"
+
+  if (species == "MUS") {
+    species_string <- "%20AND%20%28model_organism%3A10090%29"
+  } else if (species == "HUM") {
+    species_string <- "%20AND%20%28model_organism%3A9606%29"
+  }
+  else {
+    species_string <- ""
+  }
+
+  search_string_query <-
+    search_string %>%
+    stringr::str_replace_all(pattern = " ", replacement = "%20")
+
+  query <- paste0(
+    "&query=%28",
+    search_string_query,
+    "%29"
+  )
+
+  url <- paste0(
+    "https://rest.uniprot.org/uniprotkb/stream?compressed=true&fields=accession%2Creviewed%2Cid%2Cprotein_name%2Cgene_names%2Corganism_name&format=tsv",
+    query,
+    species_string
+  )
+
+  tbl <-
+    url %>%
+    rmyknife::get_gzipped_stream() %>%
+    readr::read_tsv() %>%
+    # Make rownames lowercase and replace white spaces with underscores
+    dplyr::rename_with(~
+      stringr::str_replace(., " ", "_") %>%
+      stringr::str_to_lower()
+    ) %>%
+    tidyr::separate_rows(gene_names) %>%
+    # We have multiple genes per entry, we need each gene on a individual row
+    tidyr::separate_rows(gene_names) %>%
+    dplyr::rename(gene_name = gene_names)
+  
+  if (verbose) {
+    paste0(
+      "Uniprot: Get proteins matching query ",
+      search_string,
+      " for organism ",
+      organism
+    ) %>%
+      message()
+    message("Uniprot: Here are the counts per organism.")
+    tbl %>%
+      dplyr::group_by(reviewed) %>%
+      dplyr::count(organism) %>%
+      capture.output() %>%
+      paste0(collapse = "\n") %>%
+      message()
+  }
+
+  return(tbl)
+}
+
+#' Wrapper for get_uniprot that attaches the ensembl_gene_id and external_gene_name rows
+#' @param ensembl Ensembl database connection object
+#' @param species Either "HUM" or "MUS". Leave empty for pulling all species
+#' @export
+#' @examples
+#'   species <- "MUS"
+#'   get_uniprot_with_ensembl(
+#'      search_string = "G-protein coupled receptor",
+#'      ensembl = rmyknife::get_ensembl_dataset_from_version(101, species = species),
+#'      species = species
+#'    )
+get_uniprot_with_ensembl <- function(
+  ensembl,
+  species = "MUS",
+  ...
+) {
+  # Memoise function that have determined output
+  get_gene_name_from_synonym <- rmyknife::get_memoised(rmyknife::get_gene_name_from_synonym)
+  attach_ensembl_gene_id_from_name <- rmyknife::get_memoised(rmyknife::attach_ensembl_gene_id_from_name)
+
+  # Call base uniprot function
+  rmyknife::get_uniprot(species = species, ...) %>%
+    # Prepend Uniprot call table with "uniprot_"
+    dplyr::rename_with(~ paste0("uniprot_", .)) %>%
+    # Get gene name from synonyms
+    dplyr::mutate(
+      external_gene_name = get_gene_name_from_synonym(
+        uniprot_gene_name,
+        species = species
+      )
+    ) %>%
+    # Attach proper ensembl gene id
+    attach_ensembl_gene_id_from_name(
+      gene_name_var = "external_gene_name",
+      ensembl = ensembl
+    ) %>%
+    dplyr::select(ensembl_gene_id, external_gene_name, dplyr::everything())
+}
