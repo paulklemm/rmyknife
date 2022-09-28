@@ -799,12 +799,15 @@ get_uniprot <- function(
 #' @param species Either "HUM" or "MUS". Leave empty for pulling all species
 #' @export
 #' @examples
-#'   species <- "MUS"
-#'   get_uniprot_with_ensembl(
-#'      search_string = "G-protein coupled receptor",
-#'      ensembl = rmyknife::get_ensembl_dataset_from_version(101, species = species),
-#'      species = species
-#'    )
+#'   gpcrs <-
+#'     rmyknife::get_uniprot_with_ensembl(
+#'       ensembl = rmyknife::get_ensembl_dataset_from_version(101, species = "MUS"),
+#'       species = "MUS",
+#'       search_string = "G-protein coupled receptor"
+#'     ) %>%
+#'     dplyr::filter(uniprot_reviewed == "reviewed") %>%
+#'     dplyr::filter(!is.na(ensembl_gene_id)) %>%
+#'     dplyr::distinct(ensembl_gene_id, .keep_all = TRUE)
 get_uniprot_with_ensembl <- function(
   ensembl,
   species = "MUS",

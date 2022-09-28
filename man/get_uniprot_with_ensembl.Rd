@@ -15,10 +15,13 @@ get_uniprot_with_ensembl(ensembl, species = "MUS", ...)
 Wrapper for get_uniprot that attaches the ensembl_gene_id and external_gene_name rows
 }
 \examples{
-  species <- "MUS"
-  get_uniprot_with_ensembl(
-     search_string = "G-protein coupled receptor",
-     ensembl = rmyknife::get_ensembl_dataset_from_version(101, species = species),
-     species = species
-   )
+  gpcrs <-
+    rmyknife::get_uniprot_with_ensembl(
+      ensembl = rmyknife::get_ensembl_dataset_from_version(101, species = "MUS"),
+      species = "MUS",
+      search_string = "G-protein coupled receptor"
+    ) \%>\%
+    dplyr::filter(uniprot_reviewed == "reviewed") \%>\%
+    dplyr::filter(!is.na(ensembl_gene_id)) \%>\%
+    dplyr::distinct(ensembl_gene_id, .keep_all = TRUE)
 }
