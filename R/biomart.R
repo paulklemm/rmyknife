@@ -779,7 +779,7 @@ get_uniprot <- function(
       "Uniprot: Get proteins matching query ",
       search_string,
       " for organism ",
-      organism
+      species
     ) %>%
       message()
     message("Uniprot: Here are the counts per organism.")
