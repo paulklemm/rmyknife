@@ -263,3 +263,46 @@ get_gzipped_stream <- function(url) {
     url() %>%
     gzcon()
 }
+
+#' Make targets and load them into the global enrivonment
+#' @param envir The environment to load the targets into
+#' @export
+make <- function(
+  envir = parent.frame()
+) {
+  library(magrittr)
+  # Check if make has been run before
+  make_is_initialised <-
+    exists(
+      "make_initialised",
+      envir = envir
+    )
+  
+  # Make outdated targets
+  outdated_targets <- targets::tar_outdated()
+  outdated_targets_not_empty <- length(outdated_targets) > 0
+  if (outdated_targets_not_empty) {
+    paste0("Make and load outdated targets: ", paste(outdated_targets, collapse = ", ")) %>%
+      message()
+    targets::tar_make()
+  }
+  
+  if (!make_is_initialised) {
+    # Make is not initialised, we need to load all targets
+    "Initialise make, loading all targets" %>%
+      message()
+    # Define global variable to indicate that make has been run before
+    make_initialised <<- TRUE
+    # Load the complete environment
+    targets::tar_load(
+      names = tidyselect::everything(),
+      envir = envir
+    )
+  } else if (outdated_targets_not_empty) {
+    # Make is initialised and we have outdated targets
+    targets::tar_load(
+      names = tidyselect::all_of(outdated_targets),
+      envir = envir
+    )
+  }
+}

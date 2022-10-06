@@ -52,6 +52,9 @@ options(
 
 ## ⏳ History
 
+- *2022-10-06*
+  - Add `make` for making and loading targets
+  - Bump to 0.2.7
 - *2022-09-28*
   - Add `get_gzipped_stream`, `get_uniprot` and `get_uniprot_with_ensembl`
   - Bump to 0.2.6
