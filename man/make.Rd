@@ -4,10 +4,15 @@
 \alias{make}
 \title{Make targets and load them into the global enrivonment}
 \usage{
-make(envir = parent.frame())
+make(envir = parent.frame(), load_to_environment = TRUE)
 }
 \arguments{
 \item{envir}{The environment to load the targets into}
+
+\item{load_to_environment}{Whether to load the targets into the environment after building}
+}
+\value{
+Number of outdated targets
 }
 \description{
 Make targets and load them into the global enrivonment

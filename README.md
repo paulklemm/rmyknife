@@ -52,6 +52,9 @@ options(
 
 ## ⏳ History
 
+- *2022-10-07*
+  - Enhance `make`
+  - Bump to 0.2.8
 - *2022-10-06*
   - Add `make` for making and loading targets
   - Bump to 0.2.7

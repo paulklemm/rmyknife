@@ -266,9 +266,12 @@ get_gzipped_stream <- function(url) {
 
 #' Make targets and load them into the global enrivonment
 #' @param envir The environment to load the targets into
+#' @param load_to_environment Whether to load the targets into the environment after building
+#' @return Number of outdated targets
 #' @export
 make <- function(
-  envir = parent.frame()
+  envir = parent.frame(),
+  load_to_environment = TRUE
 ) {
   library(magrittr)
   # Check if make has been run before
@@ -289,20 +292,26 @@ make <- function(
   
   if (!make_is_initialised) {
     # Make is not initialised, we need to load all targets
-    "Initialise make, loading all targets" %>%
+    "Initialise make" %>%
       message()
     # Define global variable to indicate that make has been run before
     make_initialised <<- TRUE
     # Load the complete environment
-    targets::tar_load(
-      names = tidyselect::everything(),
-      envir = envir
-    )
-  } else if (outdated_targets_not_empty) {
+    if (load_to_environment) {
+      targets::tar_load(
+        names = tidyselect::everything(),
+        envir = envir
+      )
+    }
+  } else if (outdated_targets_not_empty & load_to_environment) {
     # Make is initialised and we have outdated targets
     targets::tar_load(
       names = tidyselect::all_of(outdated_targets),
       envir = envir
     )
   }
+  
+  # Return number of outdated targets
+  length(outdated_targets) %>%
+    return()
 }
