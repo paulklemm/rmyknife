@@ -267,13 +267,27 @@ get_gzipped_stream <- function(url) {
 #' Make targets and load them into the global enrivonment
 #' @param envir The environment to load the targets into
 #' @param load_to_environment Whether to load the targets into the environment after building
+#' @param workers Number of workers to use for make (requires crew package if > 1)
 #' @return Number of outdated targets
 #' @export
 make <- function(
   envir = parent.frame(),
-  load_to_environment = TRUE
+  load_to_environment = TRUE,
+  workers = 10
 ) {
   library(magrittr)
+  
+  # Set tar_options to use workers when workers > 1
+  # See https://books.ropensci.org/targets/crew.html
+  if (workers > 1) {
+    targets::tar_option_set(
+      controller = crew::crew_controller_local(
+        workers = workers,
+        seconds_idle = 3
+      )
+    )
+  }
+
   # Check if make has been run before
   make_is_initialised <-
     exists(

@@ -52,6 +52,9 @@ options(
 
 ## ⏳ History
 
+- *2023-08-04*
+  - Add workers to `make`
+  - Bump to 0.2.9
 - *2022-10-07*
   - Enhance `make`
   - Bump to 0.2.8

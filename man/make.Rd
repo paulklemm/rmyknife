@@ -4,12 +4,14 @@
 \alias{make}
 \title{Make targets and load them into the global enrivonment}
 \usage{
-make(envir = parent.frame(), load_to_environment = TRUE)
+make(envir = parent.frame(), load_to_environment = TRUE, workers = 10)
 }
 \arguments{
 \item{envir}{The environment to load the targets into}
 
 \item{load_to_environment}{Whether to load the targets into the environment after building}
+
+\item{workers}{Number of workers to use for make (requires crew package if > 1)}
 }
 \value{
 Number of outdated targets
