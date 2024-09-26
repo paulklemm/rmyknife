@@ -351,7 +351,10 @@ make <- function(
       message()
 
     # Load outdated targets
-    targets::tar_load(tidyselect::all_of(outdated_targets_local))
+    targets::tar_load(
+      tidyselect::all_of(outdated_targets_local),
+      envir = envir
+    )
 
     # Update the tar_meta_local table
     tar_meta_local <<- tar_meta_global
