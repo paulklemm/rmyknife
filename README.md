@@ -52,6 +52,9 @@ options(
 
 ## ⏳ History
 
+- _2024-09-26_
+  - Allow `make` to check if all variables in local environment are up to date
+  - Bump to 0.3.0
 - *2023-08-04*
   - Add workers to `make`
   - Bump to 0.2.9

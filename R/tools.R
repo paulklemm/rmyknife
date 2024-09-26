@@ -275,7 +275,10 @@ make <- function(
   load_to_environment = TRUE,
   workers = 10
 ) {
+
   library(magrittr)
+
+   start_time <- Sys.time()  # Start timer
   
   # Set tar_options to use workers when workers > 1
   # See https://books.ropensci.org/targets/crew.html
@@ -299,7 +302,7 @@ make <- function(
   outdated_targets <- targets::tar_outdated()
   outdated_targets_not_empty <- length(outdated_targets) > 0
   if (outdated_targets_not_empty) {
-    paste0("Make and load outdated targets: ", paste(outdated_targets, collapse = ", ")) %>%
+    paste0("Make outdated targets: ", paste(outdated_targets, collapse = ", ")) %>%
       message()
     targets::tar_make()
   }
@@ -310,6 +313,8 @@ make <- function(
       message()
     # Define global variable to indicate that make has been run before
     make_initialised <<- TRUE
+    # Copy the entire tar_meta to the global environment
+    tar_meta_local <<- targets::tar_meta()
     # Load the complete environment
     if (load_to_environment) {
       targets::tar_load(
@@ -317,13 +322,48 @@ make <- function(
         envir = envir
       )
     }
-  } else if (outdated_targets_not_empty & load_to_environment) {
-    # Make is initialised and we have outdated targets
-    targets::tar_load(
-      names = tidyselect::all_of(outdated_targets),
-      envir = envir
-    )
+  } else if (load_to_environment) {
+    # Get the current tar_meta table and compare the time column to the local one
+    # If the time column is different, we need to load these targets
+    tar_meta_global <- targets::tar_meta()
+    # Get outdated targets in local environment
+    outdated_targets_local <-
+      dplyr::left_join(
+        tar_meta_global %>%
+          dplyr::filter(type == "stem") %>%
+          dplyr::select(name, time),
+        tar_meta_local %>%
+          dplyr::filter(type == "stem") %>%
+          dplyr::select(name, time),
+        by = "name",
+        suffix = c("_global", "_local")
+      ) %>%
+        dplyr::filter(
+          # Target in global environment is newer than in local
+          time_global > time_local |
+          # We don't have the target in the local environment
+          is.na(time_local)
+        ) %>%
+        dplyr::pull(name)
+
+    # Message about loading targets
+    paste0("Load outdated targets in local: ", paste(outdated_targets_local, collapse = ", ")) %>%
+      message()
+
+    # Load outdated targets
+    targets::tar_load(tidyselect::all_of(outdated_targets_local))
+
+    # Update the tar_meta_local table
+    tar_meta_local <<- tar_meta_global
   }
+
+  # Print timer
+  end_time <- Sys.time()  # End timer
+  total_time <- end_time - start_time
+  total_seconds <- as.numeric(total_time, units = "secs")
+  minutes <- floor(total_seconds / 60)
+  seconds <- total_seconds %% 60
+  message(sprintf("Total time taken for make: %d minutes and %.2f seconds", minutes, seconds))
   
   # Return number of outdated targets
   length(outdated_targets) %>%
