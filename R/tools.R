@@ -294,7 +294,7 @@ make <- function(
   # Check if make has been run before
   make_is_initialised <-
     exists(
-      "make_initialised",
+      ".make_initialised",
       envir = envir
     )
   
@@ -312,9 +312,9 @@ make <- function(
     "Initialise make" %>%
       message()
     # Define global variable to indicate that make has been run before
-    make_initialised <<- TRUE
+    .make_initialised <<- TRUE
     # Copy the entire tar_meta to the global environment
-    tar_meta_local <<- targets::tar_meta()
+    .tar_meta_local <<- targets::tar_meta()
     # Load the complete environment
     if (load_to_environment) {
       targets::tar_load(
@@ -332,7 +332,7 @@ make <- function(
         tar_meta_global %>%
           dplyr::filter(type == "stem") %>%
           dplyr::select(name, time),
-        tar_meta_local %>%
+        .tar_meta_local %>%
           dplyr::filter(type == "stem") %>%
           dplyr::select(name, time),
         by = "name",
@@ -378,8 +378,8 @@ make <- function(
         rm(list = ., envir = envir)
     }
 
-    # Update the tar_meta_local table
-    tar_meta_local <<- tar_meta_global
+    # Update the .tar_meta_local table
+    .tar_meta_local <<- tar_meta_global
   }
 
   # Print timer
