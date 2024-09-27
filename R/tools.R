@@ -327,7 +327,7 @@ make <- function(
     # If the time column is different, we need to load these targets
     tar_meta_global <- targets::tar_meta()
     # Get outdated targets in local environment
-    outdated_targets_local <-
+    merged_local_global <-
       dplyr::left_join(
         tar_meta_global %>%
           dplyr::filter(type == "stem") %>%
@@ -337,14 +337,17 @@ make <- function(
           dplyr::select(name, time),
         by = "name",
         suffix = c("_global", "_local")
+      )
+
+    outdated_targets_local <-
+      merged_local_global %>%
+      dplyr::filter(
+        # Target in global environment is newer than in local
+        time_global > time_local |
+        # We don't have the target in the local environment
+        is.na(time_local)
       ) %>%
-        dplyr::filter(
-          # Target in global environment is newer than in local
-          time_global > time_local |
-          # We don't have the target in the local environment
-          is.na(time_local)
-        ) %>%
-        dplyr::pull(name)
+      dplyr::pull(name)
 
     # Message about loading targets
     paste0("Load outdated targets in local: ", paste(outdated_targets_local, collapse = ", ")) %>%
@@ -355,6 +358,25 @@ make <- function(
       tidyselect::all_of(outdated_targets_local),
       envir = envir
     )
+
+    # If we have targets in local that are not in global, we need to destroy them
+    outdated_targets_global <-
+      merged_local_global %>%
+      dplyr::filter(
+        # We don't have the target in the global environment
+        is.na(time_global)
+      ) %>%
+      dplyr::pull(name)
+    if (length(outdated_targets_global) > 0) {
+      # Message about destroying targets
+      paste0("Destroy targets in local: ", paste(outdated_targets_global, collapse = ", ")) %>%
+        message()
+      # Prune targets
+      targets::tar_prune()
+      # Remove targets from local environment
+      outdated_targets_global %>%
+        rm(list = ., envir = envir)
+    }
 
     # Update the tar_meta_local table
     tar_meta_local <<- tar_meta_global
