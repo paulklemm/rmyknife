@@ -264,16 +264,21 @@ get_gzipped_stream <- function(url) {
     gzcon()
 }
 
-#' Make targets and load them into the global enrivonment
-#' @param envir The environment to load the targets into
-#' @param load_to_environment Whether to load the targets into the environment after building
-#' @param workers Number of workers to use for make (requires crew package if > 1)
-#' @return Number of outdated targets
+#' Make targets and load them into the global environment
+#' 
+#' This function builds the outdated targets using the `targets` package and optionally loads them into the specified environment. It supports parallel processing using the `crew` package when the number of workers is greater than one.
+#' 
+#' @param envir The environment to load the targets into. Defaults to the parent frame.
+#' @param load_to_environment Logical, whether to load the targets into the environment after building. Defaults to TRUE.
+#' @param workers Integer, number of workers to use for make. Requires the `crew` package if greater than 1. Defaults to 10.
+#' @param prune Logical, whether to prune the targets before making. Defaults to FALSE.
+#' @return Integer, the number of outdated targets.
 #' @export
 make <- function(
   envir = parent.frame(),
   load_to_environment = TRUE,
-  workers = 10
+  workers = 10,
+  prune = FALSE
 ) {
 
   library(magrittr)
@@ -298,6 +303,13 @@ make <- function(
       envir = envir
     )
   
+  # Prune if specified
+  if (prune) {
+    "Pruning targets" %>%
+      message()
+    targets::tar_prune()
+  }
+
   # Make outdated targets
   outdated_targets <- targets::tar_outdated()
   outdated_targets_not_empty <- length(outdated_targets) > 0
@@ -327,8 +339,8 @@ make <- function(
     # If the time column is different, we need to load these targets
     tar_meta_global <- targets::tar_meta()
     # Get outdated targets in local environment
-    merged_local_global <-
-      dplyr::left_join(
+    merged_global_local <-
+      dplyr::full_join(
         tar_meta_global %>%
           dplyr::filter(type == "stem") %>%
           dplyr::select(name, time),
@@ -340,7 +352,7 @@ make <- function(
       )
 
     outdated_targets_local <-
-      merged_local_global %>%
+      merged_global_local %>%
       dplyr::filter(
         # Target in global environment is newer than in local
         time_global > time_local |
@@ -349,9 +361,11 @@ make <- function(
       ) %>%
       dplyr::pull(name)
 
-    # Message about loading targets
-    paste0("Load outdated targets in local: ", paste(outdated_targets_local, collapse = ", ")) %>%
-      message()
+    if (length(outdated_targets_local) > 0) {
+      # Message about loading targets
+      paste0("Load outdated targets in local: ", paste(outdated_targets_local, collapse = ", ")) %>%
+        message()
+    }
 
     # Load outdated targets
     targets::tar_load(
@@ -361,7 +375,7 @@ make <- function(
 
     # If we have targets in local that are not in global, we need to destroy them
     outdated_targets_global <-
-      merged_local_global %>%
+      merged_global_local %>%
       dplyr::filter(
         # We don't have the target in the global environment
         is.na(time_global)
@@ -371,8 +385,8 @@ make <- function(
       # Message about destroying targets
       paste0("Destroy targets in local: ", paste(outdated_targets_global, collapse = ", ")) %>%
         message()
-      # Prune targets
-      targets::tar_prune()
+      # Delete targets from _targets
+      targets::tar_delete(outdated_targets_global)
       # Remove targets from local environment
       outdated_targets_global %>%
         rm(list = ., envir = envir)

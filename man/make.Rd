@@ -2,20 +2,27 @@
 % Please edit documentation in R/tools.R
 \name{make}
 \alias{make}
-\title{Make targets and load them into the global enrivonment}
+\title{Make targets and load them into the global environment}
 \usage{
-make(envir = parent.frame(), load_to_environment = TRUE, workers = 10)
+make(
+  envir = parent.frame(),
+  load_to_environment = TRUE,
+  workers = 10,
+  prune = FALSE
+)
 }
 \arguments{
-\item{envir}{The environment to load the targets into}
+\item{envir}{The environment to load the targets into. Defaults to the parent frame.}
 
-\item{load_to_environment}{Whether to load the targets into the environment after building}
+\item{load_to_environment}{Logical, whether to load the targets into the environment after building. Defaults to TRUE.}
 
-\item{workers}{Number of workers to use for make (requires crew package if > 1)}
+\item{workers}{Integer, number of workers to use for make. Requires the \code{crew} package if greater than 1. Defaults to 10.}
+
+\item{prune}{Logical, whether to prune the targets before making. Defaults to FALSE.}
 }
 \value{
-Number of outdated targets
+Integer, the number of outdated targets.
 }
 \description{
-Make targets and load them into the global enrivonment
+This function builds the outdated targets using the \code{targets} package and optionally loads them into the specified environment. It supports parallel processing using the \code{crew} package when the number of workers is greater than one.
 }
