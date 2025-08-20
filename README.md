@@ -52,6 +52,9 @@ options(
 
 ## ⏳ History
 
+- _2025-08-20_
+  - Expose extensions in datatable function
+  - Bump to 0.3.1
 - _2024-09-26_
   - Allow `make` to check if all variables in local environment are up to date
   - Bump to 0.3.0

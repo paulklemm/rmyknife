@@ -22,15 +22,25 @@ read_cufflinks <- function(path) {
 }
 
 #' Print standard DT::datatable with extensions for exporting the data
-#' @export
+#' 
 #' @param dat Dataframe to print
 #' @param caption Caption of datatable
 #' @param scroll_y Pixel size of data-table size in y
-dt_datatable <- function(dat, caption = "", scroll_y = 300) {
+#' @param extensions Character vector of DT extensions to use
+#' @return A DT::datatable object
+#' @export
+#' @examples
+#'   dt_datatable(mtcars, caption = "Motor Trend Car Road Tests")
+dt_datatable <- function(
+  dat,
+  caption = "",
+  scroll_y = 300,
+  extensions = c("Scroller", "Buttons", "ColReorder", "Responsive")
+) {
   DT::datatable(
     caption = caption,
     data = dat,
-    extensions = c("Scroller", "Buttons"),
+    extensions = extensions,
     filter = list(position = "top"),
     options = list(
       dom = "Bfrtip",

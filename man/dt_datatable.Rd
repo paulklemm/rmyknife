@@ -4,7 +4,12 @@
 \alias{dt_datatable}
 \title{Print standard DT::datatable with extensions for exporting the data}
 \usage{
-dt_datatable(dat, caption = "", scroll_y = 300)
+dt_datatable(
+  dat,
+  caption = "",
+  scroll_y = 300,
+  extensions = c("Scroller", "Buttons", "ColReorder", "Responsive")
+)
 }
 \arguments{
 \item{dat}{Dataframe to print}
@@ -12,7 +17,15 @@ dt_datatable(dat, caption = "", scroll_y = 300)
 \item{caption}{Caption of datatable}
 
 \item{scroll_y}{Pixel size of data-table size in y}
+
+\item{extensions}{Character vector of DT extensions to use}
+}
+\value{
+A DT::datatable object
 }
 \description{
 Print standard DT::datatable with extensions for exporting the data
+}
+\examples{
+  dt_datatable(mtcars, caption = "Motor Trend Car Road Tests")
 }
