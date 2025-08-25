@@ -35,7 +35,7 @@ dt_datatable <- function(
   dat,
   caption = "",
   scroll_y = 300,
-  extensions = c("Scroller", "Buttons", "ColReorder", "Responsive")
+  extensions = c("Scroller", "Buttons")
 ) {
   DT::datatable(
     caption = caption,
