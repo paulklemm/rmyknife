@@ -326,7 +326,18 @@ make <- function(
   if (outdated_targets_not_empty) {
     paste0("Make outdated targets: ", paste(outdated_targets, collapse = ", ")) %>%
       message()
-    targets::tar_make()
+
+    make_result <- tryCatch(
+      {
+        targets::tar_make()
+        TRUE
+      },
+      error = function(e) {
+        message("❌ tar_make failed: ", conditionMessage(e))
+        message("Will only load targets that were successfully built.")
+        FALSE
+      }
+    )
   }
   
   if (!make_is_initialised) {
@@ -336,11 +347,14 @@ make <- function(
     # Define global variable to indicate that make has been run before
     .make_initialised <<- TRUE
     # Copy the entire tar_meta to the global environment
-    .tar_meta_local <<- targets::tar_meta()
+    .tar_meta_local <<- targets::tar_meta() %>%
+      # Filter only targets that don't have an error
+      dplyr::filter(is.na(error))
+    
     # Load the complete environment
     if (load_to_environment) {
       targets::tar_load(
-        names = tidyselect::everything(),
+        names = .tar_meta_local$name,
         envir = envir
       )
     }
@@ -353,10 +367,10 @@ make <- function(
       dplyr::full_join(
         tar_meta_global %>%
           dplyr::filter(type == "stem") %>%
-          dplyr::select(name, time),
+          dplyr::select(name, time, error),
         .tar_meta_local %>%
           dplyr::filter(type == "stem") %>%
-          dplyr::select(name, time),
+          dplyr::select(name, time, error),
         by = "name",
         suffix = c("_global", "_local")
       )
@@ -364,10 +378,14 @@ make <- function(
     outdated_targets_local <-
       merged_global_local %>%
       dplyr::filter(
-        # Target in global environment is newer than in local
-        time_global > time_local |
-        # We don't have the target in the local environment
-        is.na(time_local)
+        (
+          # Target in global environment is newer than in local
+          time_global > time_local |
+          # We don't have the target in the local environment
+          is.na(time_local)
+        ) &
+        # Error is NA
+        is.na(error_global)
       ) %>%
       dplyr::pull(name)
 

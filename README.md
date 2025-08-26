@@ -52,6 +52,8 @@ options(
 
 ## ⏳ History
 
+- _2025-08-26_
+  - `make` now loads successfully built targets even if one of them fails
 - _2025-08-20_
   - Expose extensions in datatable function
   - Bump to 0.3.1
