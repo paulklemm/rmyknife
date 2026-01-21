@@ -8,7 +8,7 @@ dt_datatable(
   dat,
   caption = "",
   scroll_y = 300,
-  extensions = c("Scroller", "Buttons", "ColReorder", "Responsive")
+  extensions = c("Scroller", "Buttons")
 )
 }
 \arguments{
