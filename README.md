@@ -52,6 +52,9 @@ options(
 
 ## ⏳ History
 
+- _2026-01-21_
+  - `make` lists the number of targets to be made as well as the total number
+  - Bump to 0.3.3
 - _2025-08-26_
   - `make` now loads successfully built targets even if one of them fails
 - _2025-08-20_

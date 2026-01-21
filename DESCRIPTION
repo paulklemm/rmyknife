@@ -1,6 +1,6 @@
 Package: rmyknife
 Title: A Centralized Place For R Functions That I Often Use But That Do Not Belong To A More Specialized Package Yet
-Version: 0.3.2
+Version: 0.3.3
 Authors@R: 
     person(given = "Paul",
         family = "Klemm",

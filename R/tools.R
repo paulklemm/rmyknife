@@ -324,7 +324,11 @@ make <- function(
   outdated_targets <- targets::tar_outdated()
   outdated_targets_not_empty <- length(outdated_targets) > 0
   if (outdated_targets_not_empty) {
-    paste0("Make outdated targets: ", paste(outdated_targets, collapse = ", ")) %>%
+    paste0(
+      "Make ", length(outdated_targets),
+      " outdated targets (out of ", nrow(targets::tar_manifest()), " total): ",
+      paste(outdated_targets, collapse = ", ")
+    ) %>%
       message()
 
     make_result <- tryCatch(
