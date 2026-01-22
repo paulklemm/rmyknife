@@ -326,8 +326,8 @@ make <- function(
   if (outdated_targets_not_empty) {
     paste0(
       "Make ", length(outdated_targets),
-      " outdated targets (out of ", nrow(targets::tar_manifest()), " total): ",
-      paste(outdated_targets, collapse = ", ")
+      " outdated targets (out of ", nrow(targets::tar_manifest()), " total):\n",
+      paste(outdated_targets, collapse = "\n")
     ) %>%
       message()
 
