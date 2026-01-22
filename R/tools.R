@@ -434,7 +434,7 @@ make <- function(
   total_seconds <- as.numeric(total_time, units = "secs")
   minutes <- floor(total_seconds / 60)
   seconds <- total_seconds %% 60
-  message(sprintf("Total time taken for make: %d minutes and %.2f seconds", minutes, seconds))
+  message(sprintf("Total time taken for make: %02d:%02.0f minutes", minutes, seconds))
   
   # Return number of outdated targets
   length(outdated_targets) %>%
