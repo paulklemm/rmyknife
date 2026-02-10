@@ -646,6 +646,8 @@ get_orgdb_for_species <- function(species = "MUS") {
 #' @param keep_only_rows_with_entrez Only keep rows for which entrez IDs could be found
 #' @param drop_duplicates Often there is a n:1 relationship between Entrez-IDs and Ensembl-IDs. If this value is true, only keep the first hit
 #' @param species Either MUS or HUM
+#' @param ensembl Optional. If provided, use this biomaRt connection instead of OrgDb for conversion.
+#' @param verbose Print summary statistics
 #' @examples
 #'   tibble::tibble(
 #'     ensembl_gene_id = c("ENSMUSG00000000001","ENSMUSG00000000003","ENSMUSG00000000028","ENSMUSG00000000031","ENSMUSG00000000037","ENSMUSG00000000049","ENSMUSG00000000056","ENSMUSG00000000058","ENSMUSG00000000078","ENSMUSG00000000085"),
@@ -656,17 +658,40 @@ ensembl_to_entrez <- function(
   ensembl_id_name = "ensembl_gene_id",
   keep_only_rows_with_entrez = TRUE,
   drop_duplicates = TRUE,
-  species = "MUS"
+  species = "MUS",
+  ensembl = NULL,
+  verbose = TRUE
 ) {
-  org_db <- get_orgdb_for_species(species)
-  # Get the Entrez IDs
-  ens_to_ent <- dat[ensembl_id_name][[1]] %>%
-    clusterProfiler::bitr(
-      fromType = "ENSEMBL",
-      toType = "ENTREZID",
-      OrgDb = org_db
+  if (!is.null(ensembl)) {
+    ens_to_ent <- rmyknife::get_memoised(biomaRt::getBM)(
+      attributes = c("ensembl_gene_id", "entrezgene_id"),
+      filters = "ensembl_gene_id",
+      values = dat[[ensembl_id_name]],
+      mart = ensembl
     ) %>%
-    dplyr::rename(EntrezID = ENTREZID)
+      tibble::as_tibble() %>%
+      dplyr::rename(ENSEMBL = ensembl_gene_id, EntrezID = entrezgene_id) %>%
+      dplyr::mutate(EntrezID = as.character(EntrezID)) %>%
+      dplyr::filter(!is.na(EntrezID) & EntrezID != "")
+  } else {
+    org_db <- get_orgdb_for_species(species)
+    # Get the Entrez IDs
+    ens_to_ent <- dat[ensembl_id_name][[1]] %>%
+      clusterProfiler::bitr(
+        fromType = "ENSEMBL",
+        toType = "ENTREZID",
+        OrgDb = org_db
+      ) %>%
+      dplyr::rename(EntrezID = ENTREZID)
+  }
+
+  if (verbose) {
+    n_input_unique <- dat[[ensembl_id_name]] %>% unique() %>% length()
+    n_mapped_unique <- ens_to_ent$ENSEMBL %>% unique() %>% length()
+    pct_mapped <- round(n_mapped_unique / n_input_unique * 100, 1)
+    message(paste0("Mapped ", n_mapped_unique, " of ", n_input_unique, " unique input genes to Entrez IDs (", pct_mapped, "%)."))
+  }
+
   # Drop duplicates if required
   if (drop_duplicates) {
     ens_to_ent <- ens_to_ent %>% dplyr::filter(!duplicated(ENSEMBL))

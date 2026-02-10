@@ -9,7 +9,9 @@ ensembl_to_entrez(
   ensembl_id_name = "ensembl_gene_id",
   keep_only_rows_with_entrez = TRUE,
   drop_duplicates = TRUE,
-  species = "MUS"
+  species = "MUS",
+  ensembl = NULL,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -22,6 +24,10 @@ ensembl_to_entrez(
 \item{drop_duplicates}{Often there is a n:1 relationship between Entrez-IDs and Ensembl-IDs. If this value is true, only keep the first hit}
 
 \item{species}{Either MUS or HUM}
+
+\item{ensembl}{Optional. If provided, use this biomaRt connection instead of OrgDb for conversion.}
+
+\item{verbose}{Print summary statistics}
 }
 \description{
 Gets Entrez IDs and add it to dat

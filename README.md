@@ -52,6 +52,9 @@ options(
 
 ## ⏳ History
 
+- _2026-02-10_
+  - `ensembl_to_entrez` will now use biomaRt if supplied
+  - Bump to 0.3.4
 - _2026-01-21_
   - `make` lists the number of targets to be made as well as the total number
   - Bump to 0.3.3
