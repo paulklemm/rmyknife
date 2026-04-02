@@ -413,15 +413,26 @@ make <- function(
         is.na(time_global)
       ) %>%
       dplyr::pull(name)
+
     if (length(outdated_targets_global) > 0) {
       # Message about destroying targets
       paste0("Destroy targets in local: ", paste(outdated_targets_global, collapse = ", ")) %>%
         message()
-      # Delete targets from _targets
-      targets::tar_delete(outdated_targets_global)
-      # Remove targets from local environment
-      outdated_targets_global %>%
-        rm(list = ., envir = envir)
+      # Delete targets from _targets (only if they still exist in the store)
+      existing_in_store <- intersect(
+        outdated_targets_global,
+        targets::tar_meta()$name
+      )
+      if (length(existing_in_store) > 0) {
+        targets::tar_delete(
+          names = tidyselect::all_of(existing_in_store)
+        )
+      }
+      # Remove targets from local environment (only if they exist)
+      targets_in_envir <- intersect(outdated_targets_global, ls(envir = envir))
+      if (length(targets_in_envir) > 0) {
+        rm(list = targets_in_envir, envir = envir)
+      }
     }
 
     # Update the .tar_meta_local table

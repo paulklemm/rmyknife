@@ -52,6 +52,9 @@ options(
 
 ## ⏳ History
 
+- _2026-04-02_
+  - Fix error when pruning using `make`
+  - Bump to `0.3.5`
 - _2026-02-10_
   - `ensembl_to_entrez` will now use biomaRt if supplied
   - Bump to 0.3.4
