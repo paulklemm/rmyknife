@@ -358,7 +358,7 @@ make <- function(
     # Load the complete environment
     if (load_to_environment) {
       targets::tar_load(
-        names = .tar_meta_local$name,
+        names = tidyselect::all_of(.tar_meta_local$name),
         envir = envir
       )
     }
