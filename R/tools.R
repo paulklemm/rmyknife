@@ -357,10 +357,13 @@ make <- function(
     
     # Load the complete environment
     if (load_to_environment) {
-      targets::tar_load(
-        names = tidyselect::all_of(.tar_meta_local$name),
-        envir = envir
-      )
+      names_in_store <- .tar_meta_local$name[targets::tar_exist_objects(.tar_meta_local$name)]
+      if (length(names_in_store) > 0) {
+        targets::tar_load(
+          names = tidyselect::all_of(names_in_store),
+          envir = envir
+        )
+      }
     }
   } else if (load_to_environment) {
     # Get the current tar_meta table and compare the time column to the local one
