@@ -52,6 +52,9 @@ options(
 
 ## ⏳ History
 
+- _2026-04-20_
+  - Code-review package
+  - Bump to `0.3.6`
 - _2026-04-02_
   - Fix error when pruning using `make`
   - Bump to `0.3.5`

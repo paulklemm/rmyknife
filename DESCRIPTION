@@ -1,13 +1,13 @@
 Package: rmyknife
 Title: A Centralized Place For R Functions That I Often Use But That Do Not Belong To A More Specialized Package Yet
-Version: 0.3.5
+Version: 0.3.6
 Authors@R: 
     person(given = "Paul",
         family = "Klemm",
         role = c("aut", "cre"),
         email = "paul.klemm@sf.mpg.de",
         comment = c(ORCID = "https://orcid.org/0000-0002-5985-1737"))
-Description: What the package does (one paragraph).
+Description: A collection of utility functions for bioinformatics workflows, including wrappers for biomaRt, DESeq2, Seurat, GO-term queries, targets pipeline management, and data visualization helpers.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
@@ -39,4 +39,9 @@ Imports:
     tidyr,
     tools,
     org,
-    crew
+    crew,
+    ggplot2,
+    ggrepel,
+    glue,
+    tidyselect,
+    targets

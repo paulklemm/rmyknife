@@ -48,36 +48,22 @@ get_gene_name_from_synonym <- function(
   # Convert vector to tibble
   gene_name_return <- tolower(gene_name) %>%
     tibble::tibble(gene_name = .)
-  
-  get_synonym <- function(gene) {
-    synonym <- synonyms %>%
-      dplyr::filter(alias_symbol == gene)
-    
-    # Handle multiple rows. Currently we just choose the top one
-    if (nrow(synonym) > 1) {
-      synonym %<>%
-        # Oddly enough, a synonym can map to multiple genes. Therefore we will only keep the first
-        # gene that end's up in the list to keep a n:n relationship of the function
-        head(1)
-    } else if (nrow(synonym) == 0) {
-      # Handle no return
-      if (keep_missing) {
-        return(gene)
-      } else {
-        return(NA)
-      }
-    }
-    # Return result as a single value
-    synonym %>%
-      dplyr::select(symbol) %>%
-      dplyr::pull() %>%
-      return()
-  }
 
-  # Filter the synonyms list for the ones we're interested in
+  # Deduplicate synonyms so each alias maps to exactly one symbol (keep first, matching
+  # the original behaviour that chose head(1) when multiple genes shared an alias)
+  synonyms_dedup <- synonyms %>%
+    dplyr::distinct(alias_symbol, .keep_all = TRUE)
+
   gene_name_return <- gene_name_return %>%
-    dplyr::rowwise() %>%
-    dplyr::mutate(gene_name = get_synonym(gene_name))
+    dplyr::left_join(synonyms_dedup, by = c("gene_name" = "alias_symbol")) %>%
+    dplyr::mutate(
+      gene_name = dplyr::case_when(
+        !is.na(symbol) ~ symbol,
+        keep_missing   ~ gene_name,
+        .default = NA_character_
+      )
+    ) %>%
+    dplyr::select(-symbol)
   
   paste0("Returning ", nrow(gene_name_return), " gene names from ", nrow(gene_name_return), " input gene name(s) (", is.na(gene_name_return$gene_name) %>% sum(), " NA value(s))") %>%
     message()
@@ -220,6 +206,7 @@ attach_ensembl_gene_id_from_entrez_id <- function(
 #'    attach_biomart(
 #'      ensembl_id_var = "gene_ids",
 #'      ensembl = get_ensembl_dataset_from_version(103)
+#'    )
 #'
 #'    test_data <- tibble(
 #'      gene_ids = c("ENSMUSG00000102693", "ENSMUSG00000064842", "ENSMUSG00000102851", "ENSMUSG00000089699", "ENSMUSG00000103147", "ENSMUSG00000102348", "ENSMUSG00000102592", "ENSMUSG00000104238", "ENSMUSG00000102269", "ENSMUSG00000096126"),
@@ -240,6 +227,10 @@ attach_biomart <- function(
     ensembl_version = 103,
     verbose = TRUE
   ) {
+  if (!is.data.frame(dat)) stop("`dat` must be a data frame")
+  if (!(ensembl_id_var %in% colnames(dat))) {
+    stop(paste0("Column '", ensembl_id_var, "' not found in `dat`"))
+  }
   # Check if we have genes or transcripts as input based on the first element
   type <- dat %>%
     dplyr::select(ensembl_id_var) %>%
@@ -513,21 +504,14 @@ get_genes_of_goterm_godb_helper <- function(
 #' @examples
 #'    get_goterm_name_from_id_godb(go_accession = "GO:0032680")
 get_goterm_name_from_id_godb <- function(go_accession) {
-  # Convert GOterm DB to a tibble we can filter on
-  goterm_name <-
-    AnnotationDbi::Term(GO.db::GOTERM) %>%
-    as.list() %>%
-    tibble::as_tibble() %>%
-    tidyr::pivot_longer(cols = tidyr::everything(), names_to = "accession", values_to = "name") %>%
-    # Filter for term
-    dplyr::filter(accession == go_accession)
-  if (goterm_name %>% nrow() != 1) {
-    paste0("Could not find GO-term ", go_accession, " in GO.db") %>%
-      stop()
+  goterm_entry <- tryCatch(
+    GO.db::GOTERM[[go_accession]],
+    error = function(e) NULL
+  )
+  if (is.null(goterm_entry)) {
+    stop(paste0("Could not find GO-term ", go_accession, " in GO.db"))
   }
-  goterm_name %>%
-    .$name %>%
-    return()
+  return(AnnotationDbi::Term(goterm_entry))
 }
 
 #' Get GO name using biomaRt
@@ -741,7 +725,7 @@ attach_gene_symbol_from_entrez <- function(
       OrgDb = org_db
     ) %>%
     dplyr::rename(EntrezID = ENTREZID, Symbol = SYMBOL) %>%
-    dplyr::right_join(dat) %>%
+    dplyr::right_join(dat, by = "EntrezID") %>%
     tibble::as_tibble() %>%
     return()
 }
@@ -794,8 +778,6 @@ get_uniprot <- function(
       stringr::str_replace(., " ", "_") %>%
       stringr::str_to_lower()
     ) %>%
-    tidyr::separate_rows(gene_names) %>%
-    # We have multiple genes per entry, we need each gene on a individual row
     tidyr::separate_rows(gene_names) %>%
     dplyr::rename(gene_name = gene_names)
   

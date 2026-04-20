@@ -6,7 +6,7 @@
 read_gtf <- function(path) {
   path %>%
     rtracklayer::import() %>%
-    tibble::as.tibble() %>%
+    tibble::as_tibble() %>%
     return()
 }
 
@@ -161,6 +161,11 @@ plot_volcano <- function(
   label_top_n = 10,
   highlight = c()
 ) {
+  required_cols <- c("log2FoldChange", "padj", "external_gene_name")
+  missing_cols <- setdiff(required_cols, colnames(dat))
+  if (length(missing_cols) > 0) {
+    stop(paste0("Missing required columns in `dat`: ", paste(missing_cols, collapse = ", ")))
+  }
   # Attach significance
   dat <-
     dat %>%
@@ -291,9 +296,7 @@ make <- function(
   prune = FALSE
 ) {
 
-  library(magrittr)
-
-   start_time <- Sys.time()  # Start timer
+  start_time <- Sys.time()  # Start timer
   
   # Set tar_options to use workers when workers > 1
   # See https://books.ropensci.org/targets/crew.html
@@ -331,15 +334,11 @@ make <- function(
     ) %>%
       message()
 
-    make_result <- tryCatch(
-      {
-        targets::tar_make()
-        TRUE
-      },
+    tryCatch(
+      targets::tar_make(),
       error = function(e) {
         message("❌ tar_make failed: ", conditionMessage(e))
         message("Will only load targets that were successfully built.")
-        FALSE
       }
     )
   }

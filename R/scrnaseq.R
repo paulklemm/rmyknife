@@ -116,6 +116,7 @@ get_seurat_clustering <-
 #' @return tibble of counts per cell
 #' @export
 get_gene_counts_per_cell <- function(seurat_dat, genes, tidy = TRUE) {
+  if (length(genes) == 0) stop("`genes` must be a non-empty vector")
   # Extract the genes from the list of cells
   dat <- Seurat::GetAssayData(seurat_dat) %>%
     as.data.frame() %>%
