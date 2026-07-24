@@ -35,8 +35,8 @@ Run everything **inside the project's image**, because `renv` builds the library
 # .Rprofile are left alone, only the repository pins are guaranteed.
 rmyknife::project_init()
 
-# A project that also uses a tool container:
-rmyknife::project_init(aux_images = "/cephfs/.../ggsashimi_latest.sif")
+# A site that needs a bind mount, and a project that uses a tool container:
+rmyknife::project_init(bind = "/data:/data", aux_images = "/path/to/tool.sif")
 
 # Check that everything is present, consistent and restorable
 rmyknife::project_verify()
@@ -63,7 +63,7 @@ Launching through a `latest/` symlink is fine.
 `environment.lock` always records the versioned image the symlink resolves to, never the moving pointer, and `project_verify()` resolves symlinks before comparing.
 So once `latest/` moves on to a newer image, verify tells you that you are no longer running the container the project was pinned to.
 
-Note that `project_backup()` copies the images, so archives are large (roughly 5 GB for a typical `mytidyverse` project).
+Note that `project_backup()` copies the images, so archives are large — expect a few GB for a typical R image plus its library.
 Use `include = "library"` for a quick snapshot without them.
 
 ## 🧠 Memoise for BiomaRt

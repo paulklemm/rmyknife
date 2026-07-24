@@ -313,15 +313,31 @@ ensure_lines <- function(file, lines) {
   TRUE
 }
 
+#' The singularity invocation for an image
+#'
+#' Bind mounts are site specific, so they are only included when the project
+#' actually sets them.
+#'
+#' @param image Path to the image
+#' @param bind Bind mounts, or NULL for none
+#' @keywords internal
+singularity_exec <- function(image, bind = NULL) {
+  if (is.null(bind) || !nzchar(bind)) {
+    paste("singularity exec", image)
+  } else {
+    paste("singularity exec --bind", bind, image)
+  }
+}
+
 #' Stub makefile for a project that does not have one
 #' @param image Path to the primary image
-#' @param bind Bind mounts
+#' @param bind Bind mounts, or NULL for none
 #' @keywords internal
-makefile_template <- function(image, bind) {
+makefile_template <- function(image, bind = NULL) {
   c(
     "SHELL=/bin/bash",
     "current_date := $(shell date +'%Y-%m-%d_%H-%M')",
-    sprintf("SINGULARITY=singularity exec --bind %s %s", bind, image),
+    paste0("SINGULARITY=", singularity_exec(image, bind)),
     "",
     ".PHONY: verify",
     "verify:",
@@ -343,8 +359,8 @@ makefile_template <- function(image, bind) {
 #' package library with the running R. Recording one image from a session inside
 #' a different one would produce a library that matches neither.
 #'
-#' Auxiliary images (tool containers such as ggsashimi) are recorded and
-#' checksummed for archival but never entered.
+#' Auxiliary images, such as containers holding a single command line tool, are
+#' recorded and checksummed for archival but never entered.
 #'
 #' @param path Project root. Defaults to the working directory.
 #' @param image Path to the primary singularity image. Defaults to the image the
@@ -354,7 +370,8 @@ makefile_template <- function(image, bind) {
 #'   `renv.lock`, else the image build date.
 #' @param bioc_version Bioconductor release. Defaults to the version in an
 #'   existing `renv.lock`, else the running BiocManager version.
-#' @param bind Bind mounts for the singularity invocation.
+#' @param bind Bind mounts for the singularity invocation, for example
+#'   `"/data:/data"`. Defaults to none.
 #' @param dirs Directories to create if missing.
 #' @param checksum Whether to compute image checksums. Several GB per image over
 #'   a network filesystem, so roughly a minute each, once.
@@ -366,8 +383,8 @@ makefile_template <- function(image, bind) {
 #'   # New project, inside the container:
 #'   project_init()
 #'
-#'   # Converting a project that uses a second tool container:
-#'   project_init(aux_images = "/cephfs/.../ggsashimi_latest.sif")
+#'   # A site that needs a bind mount, and a project that uses a tool container:
+#'   project_init(bind = "/data:/data", aux_images = "/path/to/tool.sif")
 #' }
 project_init <- function(
   path = ".",
@@ -375,7 +392,7 @@ project_init <- function(
   aux_images = character(),
   snapshot_date = NULL,
   bioc_version = NULL,
-  bind = "/cephfs:/cephfs",
+  bind = NULL,
   dirs = c("analysis", "docs", "release"),
   checksum = TRUE,
   overwrite = FALSE
@@ -384,7 +401,7 @@ project_init <- function(
     stop(
       "project_init() must run inside the singularity image it records, because ",
       "renv builds the library with the running R.\n",
-      "Start R with: singularity exec --bind ", bind, " <image> R"
+      "Start R with: ", singularity_exec("<image>", bind), " R"
     )
   }
 
@@ -397,9 +414,8 @@ project_init <- function(
     if (!nzchar(running)) {
       stop(
         "Running inside a container, but APPTAINER_CONTAINER is not set, so the ",
-        "image file cannot be detected.\nPass it explicitly, for example:\n",
-        '  project_init(image = "', Sys.getenv("SINGULARITY_IMAGES", "<image-dir>"),
-        '/latest/mytidyverse.simg")'
+        "image file cannot be detected.\nPass it explicitly:\n",
+        '  project_init(image = "/path/to/image.simg")'
       )
     }
     image <- running
@@ -536,7 +552,7 @@ project_init <- function(
   }
 
   makefile <- file.path(path, "makefile")
-  singularity_line <- sprintf("SINGULARITY=singularity exec --bind %s %s", bind, image)
+  singularity_line <- paste0("SINGULARITY=", singularity_exec(image, bind))
   if (!file.exists(makefile) && !file.exists(file.path(path, "Makefile"))) {
     writeLines(makefile_template(image, bind), makefile)
     message("✅ Wrote makefile")

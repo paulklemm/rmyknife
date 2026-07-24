@@ -63,6 +63,23 @@ test_that("pins are appended when there is no renv activation yet", {
   expect_equal(result[1], "# just a profile")
 })
 
+test_that("bind mounts are site specific and omitted unless asked for", {
+  expect_equal(singularity_exec("/img.simg"), "singularity exec /img.simg")
+  expect_equal(singularity_exec("/img.simg", NULL), "singularity exec /img.simg")
+  expect_equal(singularity_exec("/img.simg", ""), "singularity exec /img.simg")
+  expect_equal(
+    singularity_exec("/img.simg", "/data:/data"),
+    "singularity exec --bind /data:/data /img.simg"
+  )
+
+  plain <- makefile_template("/img.simg")
+  expect_true(any(grepl("^SINGULARITY=singularity exec /img.simg$", plain)))
+  expect_false(any(grepl("--bind", plain)))
+
+  bound <- makefile_template("/img.simg", "/data:/data")
+  expect_true(any(grepl("--bind /data:/data", bound, fixed = TRUE)))
+})
+
 test_that("lockfile pins are read back out of renv.lock", {
   path <- withr::local_tempdir()
   fake_renv_lock(path, r_version = "4.5.1", snapshot_date = "2025-11-05", bioc_version = "3.21")

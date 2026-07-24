@@ -4,12 +4,12 @@
 \alias{makefile_template}
 \title{Stub makefile for a project that does not have one}
 \usage{
-makefile_template(image, bind)
+makefile_template(image, bind = NULL)
 }
 \arguments{
 \item{image}{Path to the primary image}
 
-\item{bind}{Bind mounts}
+\item{bind}{Bind mounts, or NULL for none}
 }
 \description{
 Stub makefile for a project that does not have one

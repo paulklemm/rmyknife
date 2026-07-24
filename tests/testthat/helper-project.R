@@ -4,7 +4,7 @@
 # reads, plus a small stand-in for the singularity image so checksums and sizes
 # are real without moving gigabytes around.
 
-fake_image <- function(dir, name = "mytidyverse-4.6.1-1.simg", content = "not really an image") {
+fake_image <- function(dir, name = "analysis-1.2.3.simg", content = "not really an image") {
   path <- file.path(dir, name)
   writeLines(content, path)
   normalizePath(path)
@@ -60,7 +60,7 @@ fake_project <- function(
     r_version = r_version,
     snapshot_date = snapshot_date,
     bioc_version = bioc_version,
-    bind = "/cephfs:/cephfs",
+    bind = "/data:/data",
     images = list(describe_image(image, "primary", labels = list(), checksum = TRUE))
   )
   write_env_lock(env_lock, env_lock_path(project))

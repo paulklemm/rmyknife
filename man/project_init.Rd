@@ -10,7 +10,7 @@ project_init(
   aux_images = character(),
   snapshot_date = NULL,
   bioc_version = NULL,
-  bind = "/cephfs:/cephfs",
+  bind = NULL,
   dirs = c("analysis", "docs", "release"),
   checksum = TRUE,
   overwrite = FALSE
@@ -30,7 +30,8 @@ current session runs in.}
 \item{bioc_version}{Bioconductor release. Defaults to the version in an
 existing \code{renv.lock}, else the running BiocManager version.}
 
-\item{bind}{Bind mounts for the singularity invocation.}
+\item{bind}{Bind mounts for the singularity invocation, for example
+\code{"/data:/data"}. Defaults to none.}
 
 \item{dirs}{Directories to create if missing.}
 
@@ -52,15 +53,15 @@ Must be run inside the image it records, because \code{\link[renv:init]{renv::in
 package library with the running R. Recording one image from a session inside
 a different one would produce a library that matches neither.
 
-Auxiliary images (tool containers such as ggsashimi) are recorded and
-checksummed for archival but never entered.
+Auxiliary images, such as containers holding a single command line tool, are
+recorded and checksummed for archival but never entered.
 }
 \examples{
 \dontrun{
   # New project, inside the container:
   project_init()
 
-  # Converting a project that uses a second tool container:
-  project_init(aux_images = "/cephfs/.../ggsashimi_latest.sif")
+  # A site that needs a bind mount, and a project that uses a tool container:
+  project_init(bind = "/data:/data", aux_images = "/path/to/tool.sif")
 }
 }

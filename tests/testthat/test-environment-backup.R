@@ -96,7 +96,7 @@ test_that("the manifest records what went into the backup", {
 test_that("RESTORE.md names the docker rebuild route when one is known", {
   fixture <- fake_project()
   env_lock <- read_env_lock(fixture$project)
-  env_lock$images[[1]]$docker <- "paulklemm/mytidyverse:4.6.1-1"
+  env_lock$images[[1]]$docker <- "example/analysis:1.2.3"
   write_env_lock(env_lock, env_lock_path(fixture$project))
 
   archive <- suppressMessages(project_backup(fixture$project, include = "images"))
@@ -104,7 +104,7 @@ test_that("RESTORE.md names the docker rebuild route when one is known", {
   suppressMessages(project_restore(archive, destination))
 
   instructions <- readLines(file.path(destination, "RESTORE.md"))
-  expect_true(any(grepl("paulklemm/mytidyverse:4.6.1-1", instructions, fixed = TRUE)))
+  expect_true(any(grepl("example/analysis:1.2.3", instructions, fixed = TRUE)))
 })
 
 test_that("backups do not silently overwrite each other", {
