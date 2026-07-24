@@ -1,3 +1,10 @@
+#' Pipe operators used throughout the package
+#'
+#' @importFrom magrittr %>% %<>%
+#' @name pipe
+#' @keywords internal
+NULL
+
 .onLoad <- function(libname, pkgname) {
   op <- options()
   op.rmyknife <- list(
