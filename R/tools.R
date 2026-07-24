@@ -337,7 +337,7 @@ make <- function(
     tryCatch(
       targets::tar_make(),
       error = function(e) {
-        message("❌ tar_make failed: ", conditionMessage(e))
+        status_message("fail", "tar_make failed: ", conditionMessage(e))
         message("Will only load targets that were successfully built.")
       }
     )
