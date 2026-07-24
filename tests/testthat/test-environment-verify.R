@@ -91,6 +91,60 @@ test_that("missing project files are reported", {
   expect_match(report$detail[report$check == "project files"], "settings.json")
 })
 
+test_that("a symlinked container resolves to the versioned image it points at", {
+  fixture <- fake_project()
+  symlink <- file.path(dirname(fixture$image), "mytidyverse.simg")
+  file.symlink(fixture$image, symlink)
+
+  # init records what the symlink points at, never the moving pointer itself.
+  described <- describe_image(symlink, "primary", labels = list(), checksum = TRUE)
+  expect_equal(described$path, fixture$image)
+  expect_equal(described$name, "mytidyverse-4.6.1-1.simg")
+
+  # A session started through the symlink is still the recorded container.
+  withr::local_envvar(APPTAINER_CONTAINER = symlink)
+  report <- suppressMessages(project_verify(fixture$project, network = FALSE))
+  expect_equal(status_of(report, "running image"), "ok")
+  expect_match(report$detail[report$check == "running image"], "via")
+})
+
+test_that("a symlink that has moved on to another image is caught", {
+  fixture <- fake_project()
+  other <- fake_image(dirname(fixture$image), "mytidyverse-4.7.0-1.simg", "a newer image")
+  symlink <- file.path(dirname(fixture$image), "mytidyverse.simg")
+  file.symlink(other, symlink)
+
+  withr::local_envvar(APPTAINER_CONTAINER = symlink)
+  report <- suppressMessages(project_verify(fixture$project, network = FALSE))
+  expect_equal(status_of(report, "running image"), "warn")
+  expect_match(report$detail[report$check == "running image"], "4\\.7\\.0")
+})
+
+test_that("a makefile naming the image through a symlink still matches", {
+  fixture <- fake_project()
+  symlink <- file.path(dirname(fixture$image), "mytidyverse.simg")
+  file.symlink(fixture$image, symlink)
+  writeLines(
+    paste0("SINGULARITY=singularity exec --bind /cephfs:/cephfs ", symlink),
+    file.path(fixture$project, "makefile")
+  )
+
+  report <- suppressMessages(project_verify(fixture$project, network = FALSE))
+  expect_equal(status_of(report, "makefile image"), "ok")
+})
+
+test_that("a makefile building the image path from a variable says so", {
+  fixture <- fake_project()
+  writeLines(
+    "SINGULARITY=singularity exec --bind /cephfs:/cephfs $(SINGULARITY_IMAGES)/latest/mytidyverse.simg",
+    file.path(fixture$project, "makefile")
+  )
+
+  report <- suppressMessages(project_verify(fixture$project, network = FALSE))
+  expect_equal(status_of(report, "makefile image"), "warn")
+  expect_match(report$detail[report$check == "makefile image"], "variable")
+})
+
 test_that("a makefile pointing at a different image is flagged", {
   fixture <- fake_project()
   writeLines(

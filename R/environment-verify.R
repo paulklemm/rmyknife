@@ -155,10 +155,21 @@ project_verify <- function(path = ".", deep = FALSE, network = TRUE, strict = FA
   running <- Sys.getenv("APPTAINER_CONTAINER")
   primary <- Filter(function(image) identical(image$role, "primary"), env_lock$images)[[1]]
   if (nzchar(running)) {
+    # Apptainer reports the path it was given, so a session started through a
+    # `latest/` symlink names the symlink. Compare resolved paths, or every such
+    # session would look like it is running the wrong container.
+    resolved <- normalizePath(running, mustWork = FALSE)
+    matches <- identical(resolved, primary$path)
     rows[[length(rows) + 1L]] <- check_row(
       "running image",
-      status_if(identical(running, primary$path), "warn"),
-      if (identical(running, primary$path)) "matches the recorded primary image" else paste0("running ", running)
+      status_if(matches, "warn"),
+      if (matches && identical(resolved, running)) {
+        "matches the recorded primary image"
+      } else if (matches) {
+        paste0("matches the recorded primary image, via ", running)
+      } else {
+        paste0("running ", resolved, ", recorded ", primary$path)
+      }
     )
   }
 
@@ -260,11 +271,22 @@ project_verify <- function(path = ".", deep = FALSE, network = TRUE, strict = FA
   if (length(makefile) > 0) {
     lines <- readLines(makefile[1], warn = FALSE)
     singularity <- grep("^SINGULARITY", lines, value = TRUE)
-    matches <- length(singularity) > 0 && any(grepl(primary$path, singularity, fixed = TRUE))
+    referenced <- unlist(regmatches(singularity, gregexpr("[^[:space:]]+\\.(simg|sif)", singularity)))
+    # A makefile may name the image through a `latest/` symlink, so resolve
+    # before comparing. Paths built from a make or shell variable cannot be
+    # resolved here, and are reported as unconfirmable rather than wrong.
+    variable <- any(grepl("[$]", referenced))
+    matches <- primary$path %in% normalizePath(referenced, mustWork = FALSE)
     rows[[length(rows) + 1L]] <- check_row(
       "makefile image",
       status_if(matches, "warn"),
-      if (matches) "points at the recorded primary image" else "SINGULARITY line does not reference the recorded image"
+      if (matches) {
+        "points at the recorded primary image"
+      } else if (variable) {
+        "SINGULARITY line builds the path from a variable, cannot confirm it"
+      } else {
+        "SINGULARITY line does not reference the recorded image"
+      }
     )
   }
 

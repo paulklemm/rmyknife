@@ -55,6 +55,10 @@ A project can be perfectly restorable from its backup while its lockfile is stil
 
 For a project that has no `renv` yet, the CRAN snapshot defaults to the **image build date** rather than today, since its packages are frozen at image build time.
 
+Launching through a `latest/` symlink is fine.
+`environment.lock` always records the versioned image the symlink resolves to, never the moving pointer, and `project_verify()` resolves symlinks before comparing.
+So once `latest/` moves on to a newer image, verify tells you that you are no longer running the container the project was pinned to.
+
 Note that `project_backup()` copies the images, so archives are large (roughly 5 GB for a typical `mytidyverse` project).
 Use `include = c("library", "git")` for a quick snapshot without them.
 
