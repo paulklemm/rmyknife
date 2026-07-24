@@ -3,6 +3,7 @@
 <!-- TOC depthFrom:2 -->
 
 - [💾 Installation](#💾-installation)
+- [📦 Reproducible project environments](#📦-reproducible-project-environments)
 - [🧠 Memoise for BiomaRt](#🧠-memoise-for-biomart)
 - [♻️ Using Ensembl mirror](#♻️-using-ensembl-mirror)
 - [⏳ History](#⏳-history)
@@ -20,6 +21,42 @@ You can install the github version of rmyknife with:
 library(devtools)
 devtools::install_github("paulklemm/rmyknife")
 ```
+
+## 📦 Reproducible project environments
+
+Three layers pin an analysis project: the singularity image (OS, R, system libraries), the R package library (`renv.lock` plus dated repositories), and the code (git).
+`renv` already covers the middle layer.
+These functions add the container layer as a checksummed, in-repo fact recorded in `environment.lock`, and make the whole thing verifiable and archivable.
+
+Run everything **inside the project's image**, because `renv` builds the library with the running R.
+
+```r
+# Set the project up. Safe on existing projects: an existing renv.lock and
+# .Rprofile are left alone, only the repository pins are guaranteed.
+rmyknife::project_init()
+
+# A project that also uses a tool container:
+rmyknife::project_init(aux_images = "/cephfs/.../ggsashimi_latest.sif")
+
+# Check that everything is present, consistent and restorable
+rmyknife::project_verify()
+
+# Archive image, library, git history and configuration into one file
+rmyknife::project_backup()
+
+# Bring one back
+rmyknife::project_restore("backup/myproject_2026-07-24_a1b2c3d.tar.zst", destination = "restored")
+```
+
+`project_verify()` reports two independent kinds of restorability.
+**From backup** is offline and exact: the archived image plus the binary library, so no compilation and no network.
+**From lockfile** is a rebuild from scratch and needs every package to resolve, which is commonly partial for a project converted from a pre-renv state — a locally installed package will never restore over the network.
+A project can be perfectly restorable from its backup while its lockfile is still messy, so the useful order is convert, back up immediately, then clean the lockfile up at leisure.
+
+For a project that has no `renv` yet, the CRAN snapshot defaults to the **image build date** rather than today, since its packages are frozen at image build time.
+
+Note that `project_backup()` copies the images, so archives are large (roughly 5 GB for a typical `mytidyverse` project).
+Use `include = c("library", "git")` for a quick snapshot without them.
 
 ## 🧠 Memoise for BiomaRt
 
@@ -52,6 +89,9 @@ options(
 
 ## ⏳ History
 
+- _2026-07-24_
+  - Add `project_init`, `project_verify`, `project_backup` and `project_restore` for reproducible project environments
+  - Bump to `0.4.0`
 - _2026-04-20_
   - Code-review package
   - Bump to `0.3.6`

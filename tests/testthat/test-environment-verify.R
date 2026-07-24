@@ -1,0 +1,123 @@
+test_that("a consistent project passes the checks that do not need renv", {
+  fixture <- fake_project()
+  report <- suppressMessages(project_verify(fixture$project, network = FALSE))
+
+  expect_equal(status_of(report, "environment.lock"), "ok")
+  expect_equal(status_of(report, "project files"), "ok")
+  expect_equal(status_of(report, "image:mytidyverse-4.6.1-1.simg"), "ok")
+  expect_equal(status_of(report, "lockfile consistency"), "ok")
+  expect_equal(status_of(report, ".Rprofile pins"), "ok")
+  expect_equal(status_of(report, "restorable from lockfile"), "ok")
+})
+
+test_that("a missing image fails and names the docker rebuild route", {
+  fixture <- fake_project()
+  file.remove(fixture$image)
+  report <- suppressMessages(project_verify(fixture$project, network = FALSE))
+
+  row <- report[report$check == "image:mytidyverse-4.6.1-1.simg", ]
+  expect_equal(row$status, "fail")
+  expect_match(row$detail, "unrecoverable")
+})
+
+test_that("a missing image reports its docker tag when one was recorded", {
+  fixture <- fake_project()
+  env_lock <- read_env_lock(fixture$project)
+  env_lock$images[[1]]$docker <- "paulklemm/mytidyverse:4.6.1-1"
+  write_env_lock(env_lock, env_lock_path(fixture$project))
+  file.remove(fixture$image)
+
+  report <- suppressMessages(project_verify(fixture$project, network = FALSE))
+  expect_match(report$detail[report$check == "image:mytidyverse-4.6.1-1.simg"], "paulklemm/mytidyverse")
+})
+
+test_that("a tampered image is caught by size, and by checksum when unchanged in size", {
+  fixture <- fake_project()
+  original <- readLines(fixture$image)
+
+  writeLines(paste0(original, " plus more"), fixture$image)
+  report <- suppressMessages(project_verify(fixture$project, network = FALSE))
+  expect_equal(status_of(report, "image:mytidyverse-4.6.1-1.simg"), "fail")
+
+  # Same byte count, different content: only a deep check can see this.
+  writeLines(paste0(substr(original, 1, nchar(original) - 1), "X"), fixture$image)
+  shallow <- suppressMessages(project_verify(fixture$project, network = FALSE))
+  expect_equal(status_of(shallow, "image:mytidyverse-4.6.1-1.simg"), "ok")
+
+  deep <- suppressMessages(project_verify(fixture$project, network = FALSE, deep = TRUE))
+  expect_equal(status_of(deep, "image:mytidyverse-4.6.1-1.simg"), "fail")
+})
+
+test_that("bumping the .Rprofile date without re-snapshotting is caught", {
+  fixture <- fake_project()
+  writeLines(
+    rprofile_template("2026-09-01", "3.23", "noble"),
+    file.path(fixture$project, ".Rprofile")
+  )
+  report <- suppressMessages(project_verify(fixture$project, network = FALSE))
+  expect_equal(status_of(report, ".Rprofile pins"), "fail")
+})
+
+test_that("a lockfile disagreeing with the environment lock is caught", {
+  fixture <- fake_project()
+  fake_renv_lock(fixture$project, r_version = "4.5.1", snapshot_date = "2025-11-05", bioc_version = "3.21")
+  report <- suppressMessages(project_verify(fixture$project, network = FALSE))
+
+  expect_equal(status_of(report, "lockfile consistency"), "fail")
+  expect_match(report$detail[report$check == "lockfile consistency"], "4\\.5\\.1")
+})
+
+test_that("the two restorability tiers are reported independently", {
+  fixture <- fake_project(packages = list(
+    dplyr = list(Package = "dplyr", Version = "1.2.1", Source = "Repository", Repository = "CRAN"),
+    mystery = list(Package = "mystery", Version = "0.1", Source = "unknown")
+  ))
+  report <- suppressMessages(project_verify(fixture$project, network = FALSE))
+
+  # The image is present, so the project can be backed up right now, even though
+  # a package will never restore over the network. This is the normal state of a
+  # freshly converted pre-renv project.
+  expect_equal(status_of(report, "restorable from backup"), "ok")
+  expect_equal(status_of(report, "restorable from lockfile"), "warn")
+  expect_match(report$detail[report$check == "restorable from lockfile"], "mystery")
+})
+
+test_that("missing project files are reported", {
+  fixture <- fake_project()
+  file.remove(file.path(fixture$project, "renv", "settings.json"))
+  report <- suppressMessages(project_verify(fixture$project, network = FALSE))
+
+  expect_equal(status_of(report, "project files"), "fail")
+  expect_match(report$detail[report$check == "project files"], "settings.json")
+})
+
+test_that("a makefile pointing at a different image is flagged", {
+  fixture <- fake_project()
+  writeLines(
+    "SINGULARITY=singularity exec --bind /cephfs:/cephfs /somewhere/else.simg",
+    file.path(fixture$project, "makefile")
+  )
+  report <- suppressMessages(project_verify(fixture$project, network = FALSE))
+  expect_equal(status_of(report, "makefile image"), "warn")
+})
+
+test_that("strict mode raises exactly when a check fails", {
+  fixture <- fake_project()
+  report <- suppressMessages(project_verify(fixture$project, network = FALSE))
+  # The fabricated project has a lockfile but no installed library, so renv
+  # rightly reports it out of sync. Everything the container layer owns passes.
+  expect_false(any(report$status[report$check != "renv status"] == "fail"))
+
+  file.remove(fixture$image)
+  expect_error(
+    suppressMessages(project_verify(fixture$project, network = FALSE, strict = TRUE)),
+    "Verification failed"
+  )
+})
+
+test_that("verify fails cleanly on an uninitialised project", {
+  path <- withr::local_tempdir()
+  report <- suppressMessages(project_verify(path, network = FALSE))
+  expect_equal(report$status, "fail")
+  expect_equal(nrow(report), 1)
+})

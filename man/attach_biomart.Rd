@@ -40,6 +40,7 @@ Attach Biomart variables based on either gene or transcript IDs
    attach_biomart(
      ensembl_id_var = "gene_ids",
      ensembl = get_ensembl_dataset_from_version(103)
+   )
 
    test_data <- tibble(
      gene_ids = c("ENSMUSG00000102693", "ENSMUSG00000064842", "ENSMUSG00000102851", "ENSMUSG00000089699", "ENSMUSG00000103147", "ENSMUSG00000102348", "ENSMUSG00000102592", "ENSMUSG00000104238", "ENSMUSG00000102269", "ENSMUSG00000096126"),
