@@ -2,7 +2,7 @@
 % Please edit documentation in R/environment-backup.R
 \name{project_restore}
 \alias{project_restore}
-\title{Restore a project environment from a backup}
+\title{Restore a compute environment from a backup}
 \usage{
 project_restore(archive, destination, verify = TRUE)
 }
@@ -20,6 +20,10 @@ Path to the restored directory, invisibly.
 Unpacks the archive, verifies every member against the recorded checksums and
 reports what was recovered. Images are unpacked into \verb{images/} for you to move
 into place; nothing outside \code{destination} is written.
+}
+\details{
+This restores the environment only. Check the project code out of git at the
+commit named in the manifest to pair the two halves back up.
 }
 \examples{
 \dontrun{

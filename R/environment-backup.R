@@ -23,28 +23,12 @@ active_library <- function(path) {
   sub("/x86_64[^/]*$", "", relative)
 }
 
-#' Does the project track files with git-lfs?
-#'
-#' Matters for backups: `git bundle` carries the whole history, but lfs blobs
-#' live outside git, so only their pointers make it into the archive.
-#'
-#' @param path Project root
-#' @keywords internal
-uses_git_lfs <- function(path) {
-  attributes <- file.path(path, ".gitattributes")
-  if (!file.exists(attributes)) {
-    return(FALSE)
-  }
-  any(grepl("filter=lfs", readLines(attributes, warn = FALSE), fixed = TRUE))
-}
-
 #' Instructions written into every backup
 #' @param env_lock Environment lock
 #' @param archive Archive file name
 #' @param members Files contained in the archive
-#' @param lfs Whether the project tracks files with git-lfs
 #' @keywords internal
-restore_instructions <- function(env_lock, archive, members, lfs = FALSE) {
+restore_instructions <- function(env_lock, archive, members) {
   primary <- Filter(function(image) identical(image$role, "primary"), env_lock$images)[[1]]
   # Absent fields round-trip through JSON as NULL rather than NA.
   docker <- primary$docker %||% NA_character_
@@ -78,53 +62,46 @@ restore_instructions <- function(env_lock, archive, members, lfs = FALSE) {
     "sha256sum -c CHECKSUMS.sha256",
     paste0("cp images/", primary$name, " ", dirname(primary$path), "/"),
     "tar -xf library.tar.zst --use-compress-program=zstd    # if present",
-    "git clone repo.bundle <project>                        # if present",
     "```",
     "",
     "The binary library matches this exact image, so no compilation and no network",
     "are needed. `renv::restore()` is only the fallback when the library tarball",
     "was not included.",
-    if (lfs) {
-      c(
-        "",
-        "## git-lfs",
-        "",
-        "This project tracks files with git-lfs. `repo.bundle` holds the complete",
-        "history, but lfs blobs live outside git and are **not** in this archive:",
-        "only their pointers are. Clone with `GIT_LFS_SKIP_SMUDGE=1 git clone",
-        "repo.bundle <project>`, then fetch the blobs from the lfs remote while it",
-        "still exists. Those files are deliverables, not part of the environment."
-      )
-    } else {
-      NULL
-    }
+    "",
+    "## What this archive is not",
+    "",
+    "This is the compute environment only: the image and the package library. The",
+    "project code, its history and its `.Rprofile` are not here, because they live",
+    paste0("in git. Check the repository out at commit `", env_lock$git_revision %||% "unknown", "` to pair the two halves back up.")
   )
 }
 
-#' Archive everything needed to restore a project environment
+#' Archive the compute environment of a project
 #'
-#' Produces a single compressed archive holding the environment lock, the renv
-#' configuration, the built package library, the git history and the singularity
-#' images. Paired with the archived image, the binary library restores without
-#' compilation or network access, so a project stays restorable even when its
-#' lockfile has entries that no longer resolve.
+#' Produces a single compressed archive holding the singularity images and the
+#' built package library, with `renv.lock` to describe it. Together they restore
+#' without compilation or network access, so a project stays restorable even when
+#' its lockfile has entries that no longer resolve.
+#'
+#' The project code, its history and its `.Rprofile` are deliberately excluded:
+#' they live in git. The archive records the commit the environment served, so
+#' the two halves can be paired up again.
 #'
 #' @param path Project root.
 #' @param destination Directory for the archive, relative to `path`.
-#' @param include What to archive besides the environment lock and renv
-#'   configuration. Any of `"library"`, `"git"` and `"images"`.
+#' @param include What to archive. Either or both of `"library"` and `"images"`.
 #' @return Path to the archive, invisibly.
 #' @export
 #' @examples
 #' \dontrun{
 #'   project_backup()
 #'   # quick snapshot without the multi-GB images
-#'   project_backup(include = c("library", "git"))
+#'   project_backup(include = "library")
 #' }
 project_backup <- function(
   path = ".",
   destination = "backup",
-  include = c("library", "git", "images")
+  include = c("library", "images")
 ) {
   include <- match.arg(include, several.ok = TRUE)
   path <- normalizePath(path, mustWork = TRUE)
@@ -147,16 +124,12 @@ project_backup <- function(
   dir.create(staging, recursive = TRUE)
   on.exit(unlink(staging, recursive = TRUE), add = TRUE)
 
-  configuration <- c(env_lock_file, "renv.lock", ".Rprofile", "analysis/.Rprofile", "renv/settings.json", "renv/activate.R")
+  # renv.lock is the only project file carried, because it describes the very
+  # library being archived. Everything else the project needs lives in git.
   members <- character()
-  for (file in configuration) {
-    source <- file.path(path, file)
-    if (!file.exists(source)) {
-      next
-    }
-    dir.create(file.path(staging, dirname(file)), recursive = TRUE, showWarnings = FALSE)
-    file.copy(source, file.path(staging, file), overwrite = TRUE)
-    members <- c(members, file)
+  if (file.exists(file.path(path, "renv.lock"))) {
+    file.copy(file.path(path, "renv.lock"), file.path(staging, "renv.lock"), overwrite = TRUE)
+    members <- "renv.lock"
   }
 
   library_relative <- NULL
@@ -168,9 +141,6 @@ project_backup <- function(
       members <- c(members, "library.tar.zst")
     }
   }
-  if ("git" %in% include && dir.exists(file.path(path, ".git"))) {
-    members <- c(members, "repo.bundle")
-  }
   if ("images" %in% include) {
     members <- c(members, paste0("images/", vapply(env_lock$images, function(image) image$name, character(1))))
   }
@@ -180,18 +150,8 @@ project_backup <- function(
   manifest$backup_date <- format(Sys.Date())
   manifest$git_revision <- revision
   manifest$contents <- members
-  lfs <- uses_git_lfs(path)
   write_env_lock(manifest, file.path(staging, "MANIFEST.json"))
-  writeLines(restore_instructions(env_lock, basename(archive), members, lfs), file.path(staging, "RESTORE.md"))
-
-  if ("git" %in% include && dir.exists(file.path(path, ".git"))) {
-    if (lfs) {
-      message("⚠️  Project uses git-lfs; the bundle carries pointers, not blobs. See RESTORE.md.")
-    }
-    message("Bundling git history")
-    system2("git", c("-C", shQuote(path), "bundle", "create", shQuote(file.path(staging, "repo.bundle")), "--all"),
-      stdout = FALSE, stderr = FALSE)
-  }
+  writeLines(restore_instructions(manifest, basename(archive), members), file.path(staging, "RESTORE.md"))
 
   if (!is.null(library_relative)) {
     message("Archiving package library, this takes a while")
@@ -242,11 +202,14 @@ project_backup <- function(
   invisible(archive)
 }
 
-#' Restore a project environment from a backup
+#' Restore a compute environment from a backup
 #'
 #' Unpacks the archive, verifies every member against the recorded checksums and
 #' reports what was recovered. Images are unpacked into `images/` for you to move
 #' into place; nothing outside `destination` is written.
+#'
+#' This restores the environment only. Check the project code out of git at the
+#' commit named in the manifest to pair the two halves back up.
 #'
 #' @param archive Path to an archive produced by [project_backup()].
 #' @param destination Directory to restore into. Must not already exist.
@@ -318,9 +281,9 @@ project_restore <- function(archive, destination, verify = TRUE) {
     }
   }
 
-  bundle <- file.path(destination, "repo.bundle")
-  if (file.exists(bundle)) {
-    message("✅ Git history in repo.bundle; clone it with: git clone repo.bundle <project>")
+  revision <- manifest$git_revision %||% "unknown"
+  if (!identical(revision, "nogit")) {
+    message("ℹ️  Environment only. Check the project out of git at commit ", revision)
   }
 
   message("\n✅ Restored to ", destination, ". See RESTORE.md.")

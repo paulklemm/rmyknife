@@ -2,12 +2,12 @@
 % Please edit documentation in R/environment-backup.R
 \name{project_backup}
 \alias{project_backup}
-\title{Archive everything needed to restore a project environment}
+\title{Archive the compute environment of a project}
 \usage{
 project_backup(
   path = ".",
   destination = "backup",
-  include = c("library", "git", "images")
+  include = c("library", "images")
 )
 }
 \arguments{
@@ -15,23 +15,26 @@ project_backup(
 
 \item{destination}{Directory for the archive, relative to \code{path}.}
 
-\item{include}{What to archive besides the environment lock and renv
-configuration. Any of \code{"library"}, \code{"git"} and \code{"images"}.}
+\item{include}{What to archive. Either or both of \code{"library"} and \code{"images"}.}
 }
 \value{
 Path to the archive, invisibly.
 }
 \description{
-Produces a single compressed archive holding the environment lock, the renv
-configuration, the built package library, the git history and the singularity
-images. Paired with the archived image, the binary library restores without
-compilation or network access, so a project stays restorable even when its
-lockfile has entries that no longer resolve.
+Produces a single compressed archive holding the singularity images and the
+built package library, with \code{renv.lock} to describe it. Together they restore
+without compilation or network access, so a project stays restorable even when
+its lockfile has entries that no longer resolve.
+}
+\details{
+The project code, its history and its \code{.Rprofile} are deliberately excluded:
+they live in git. The archive records the commit the environment served, so
+the two halves can be paired up again.
 }
 \examples{
 \dontrun{
   project_backup()
   # quick snapshot without the multi-GB images
-  project_backup(include = c("library", "git"))
+  project_backup(include = "library")
 }
 }

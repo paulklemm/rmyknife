@@ -12,9 +12,41 @@ test_that("a backup round-trips through restore with checksums intact", {
   expect_true(file.exists(file.path(destination, "CHECKSUMS.sha256")))
   expect_true(file.exists(file.path(destination, "RESTORE.md")))
   expect_true(file.exists(file.path(destination, "renv.lock")))
-  expect_true(file.exists(file.path(destination, ".Rprofile")))
-  expect_true(file.exists(file.path(destination, "renv", "settings.json")))
   expect_true(file.exists(file.path(destination, "images", basename(fixture$image))))
+})
+
+test_that("the backup carries the environment only, not the repo", {
+  fixture <- fake_project()
+  dir.create(file.path(fixture$project, "analysis"))
+  writeLines("# a repo file", file.path(fixture$project, "analysis", "report.Rmd"))
+  writeLines("# delegating profile", file.path(fixture$project, "analysis", ".Rprofile"))
+  archive <- suppressMessages(project_backup(fixture$project, include = "images"))
+  destination <- file.path(fixture$root, "restored")
+  suppressMessages(project_restore(archive, destination))
+
+  # Everything git already holds stays in git.
+  expect_false(file.exists(file.path(destination, ".Rprofile")))
+  expect_false(file.exists(file.path(destination, "analysis", ".Rprofile")))
+  expect_false(file.exists(file.path(destination, "analysis", "report.Rmd")))
+  expect_false(file.exists(file.path(destination, "renv", "settings.json")))
+  expect_false(file.exists(file.path(destination, "renv", "activate.R")))
+  expect_false(file.exists(file.path(destination, "repo.bundle")))
+  expect_false(file.exists(file.path(destination, "environment.lock")))
+
+  # renv.lock stays, because it describes the archived library.
+  expect_true(file.exists(file.path(destination, "renv.lock")))
+})
+
+test_that("RESTORE.md says where the missing half lives", {
+  fixture <- fake_project()
+  archive <- suppressMessages(project_backup(fixture$project, include = "images"))
+  destination <- file.path(fixture$root, "restored")
+  suppressMessages(project_restore(archive, destination))
+
+  instructions <- paste(readLines(file.path(destination, "RESTORE.md")), collapse = " ")
+  expect_match(instructions, "compute environment only")
+  expect_match(instructions, "live in git")
+  expect_match(instructions, "Check the repository out at commit")
 })
 
 test_that("the restored image is byte-identical to the original", {
@@ -73,25 +105,6 @@ test_that("RESTORE.md names the docker rebuild route when one is known", {
 
   instructions <- readLines(file.path(destination, "RESTORE.md"))
   expect_true(any(grepl("paulklemm/mytidyverse:4.6.1-1", instructions, fixed = TRUE)))
-})
-
-test_that("git-lfs projects are told their blobs are not in the bundle", {
-  fixture <- fake_project()
-  expect_false(uses_git_lfs(fixture$project))
-
-  writeLines(
-    "docs/slides.key filter=lfs diff=lfs merge=lfs -text",
-    file.path(fixture$project, ".gitattributes")
-  )
-  expect_true(uses_git_lfs(fixture$project))
-
-  archive <- suppressMessages(project_backup(fixture$project, include = "images"))
-  destination <- file.path(fixture$root, "restored")
-  suppressMessages(project_restore(archive, destination))
-
-  instructions <- readLines(file.path(destination, "RESTORE.md"))
-  expect_true(any(grepl("git-lfs", instructions, fixed = TRUE)))
-  expect_true(any(grepl("GIT_LFS_SKIP_SMUDGE", instructions, fixed = TRUE)))
 })
 
 test_that("backups do not silently overwrite each other", {

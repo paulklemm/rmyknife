@@ -4,7 +4,7 @@
 \alias{restore_instructions}
 \title{Instructions written into every backup}
 \usage{
-restore_instructions(env_lock, archive, members, lfs = FALSE)
+restore_instructions(env_lock, archive, members)
 }
 \arguments{
 \item{env_lock}{Environment lock}
@@ -12,8 +12,6 @@ restore_instructions(env_lock, archive, members, lfs = FALSE)
 \item{archive}{Archive file name}
 
 \item{members}{Files contained in the archive}
-
-\item{lfs}{Whether the project tracks files with git-lfs}
 }
 \description{
 Instructions written into every backup

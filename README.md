@@ -41,12 +41,16 @@ rmyknife::project_init(aux_images = "/cephfs/.../ggsashimi_latest.sif")
 # Check that everything is present, consistent and restorable
 rmyknife::project_verify()
 
-# Archive image, library, git history and configuration into one file
+# Archive the compute environment: the image and the built package library
 rmyknife::project_backup()
 
 # Bring one back
 rmyknife::project_restore("backup/myproject_2026-07-24_a1b2c3d.tar.zst", destination = "restored")
 ```
+
+`project_backup()` archives the **compute environment only** — the singularity images and the built renv library, with `renv.lock` to describe it.
+The project code, its history and its `.Rprofile` are not included, because they live in git.
+The archive records the commit the environment served, so the two halves can be paired back up.
 
 `project_verify()` reports two independent kinds of restorability.
 **From backup** is offline and exact: the archived image plus the binary library, so no compilation and no network.
@@ -60,7 +64,7 @@ Launching through a `latest/` symlink is fine.
 So once `latest/` moves on to a newer image, verify tells you that you are no longer running the container the project was pinned to.
 
 Note that `project_backup()` copies the images, so archives are large (roughly 5 GB for a typical `mytidyverse` project).
-Use `include = c("library", "git")` for a quick snapshot without them.
+Use `include = "library"` for a quick snapshot without them.
 
 ## 🧠 Memoise for BiomaRt
 
