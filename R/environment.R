@@ -64,6 +64,19 @@ parse_build_date <- function(x) {
   sprintf("%04d-%02d-%02d", year, month, day)
 }
 
+#' Is this session running inside a singularity container?
+#'
+#' Tests for the metadata directory apptainer places in every container, rather
+#' than for `APPTAINER_CONTAINER`. The environment variable answers a different
+#' question -- *which* image -- and some launchers drop it while the session is
+#' genuinely still inside the container.
+#'
+#' @param marker Directory that marks a container. Exposed for testing.
+#' @keywords internal
+in_container <- function(marker = "/.singularity.d") {
+  dir.exists(marker)
+}
+
 #' Labels of the image the current session runs in
 #'
 #' Apptainer exposes the image metadata inside the container, so this needs no
@@ -367,24 +380,53 @@ project_init <- function(
   checksum = TRUE,
   overwrite = FALSE
 ) {
-  running <- Sys.getenv("APPTAINER_CONTAINER")
-  if (!nzchar(running)) {
+  if (!in_container()) {
     stop(
       "project_init() must run inside the singularity image it records, because ",
       "renv builds the library with the running R.\n",
       "Start R with: singularity exec --bind ", bind, " <image> R"
     )
   }
+
+  # Being inside a container and knowing which image file it came from are two
+  # separate questions. APPTAINER_CONTAINER answers the second, and some
+  # launchers (a tmux server started outside the container, nested shells,
+  # --cleanenv) drop it while the session is genuinely still inside.
+  running <- Sys.getenv("APPTAINER_CONTAINER")
   if (!nzchar(image)) {
+    if (!nzchar(running)) {
+      stop(
+        "Running inside a container, but APPTAINER_CONTAINER is not set, so the ",
+        "image file cannot be detected.\nPass it explicitly, for example:\n",
+        '  project_init(image = "', Sys.getenv("SINGULARITY_IMAGES", "<image-dir>"),
+        '/latest/mytidyverse.simg")'
+      )
+    }
     image <- running
   }
-  if (!identical(normalizePath(image, mustWork = FALSE), normalizePath(running, mustWork = FALSE))) {
-    stop(
-      "`image` is not the image this session runs in:\n",
-      "  requested: ", image, "\n",
-      "  running:   ", running, "\n",
-      "Re-run inside the requested image; a library built by a different R would match neither."
-    )
+  if (nzchar(running)) {
+    if (!identical(normalizePath(image, mustWork = FALSE), normalizePath(running, mustWork = FALSE))) {
+      stop(
+        "`image` is not the image this session runs in:\n",
+        "  requested: ", image, "\n",
+        "  running:   ", running, "\n",
+        "Re-run inside the requested image; a library built by a different R would match neither."
+      )
+    }
+  } else {
+    # No path to compare against, so confirm identity by build date instead.
+    running_build <- label_value(image_labels_self(), "org.label-schema.build-date")
+    given_build <- label_value(image_labels_inspect(image), "org.label-schema.build-date")
+    if (!is.na(running_build) && !is.na(given_build) && !identical(running_build, given_build)) {
+      stop(
+        "`image` is not the container this session runs in:\n",
+        "  requested was built ", given_build, "\n",
+        "  running was built   ", running_build
+      )
+    }
+    if (is.na(given_build)) {
+      message("⚠️  Could not confirm that ", basename(image), " is this session's container.")
+    }
   }
 
   path <- normalizePath(path, mustWork = TRUE)

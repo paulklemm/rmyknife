@@ -171,6 +171,23 @@ project_verify <- function(path = ".", deep = FALSE, network = TRUE, strict = FA
         paste0("running ", resolved, ", recorded ", primary$path)
       }
     )
+  } else if (in_container()) {
+    # Inside a container that did not tell us which image file it came from.
+    # The build date identifies it just as well.
+    running_build <- parse_build_date(label_value(image_labels_self(), "org.label-schema.build-date"))
+    recorded_build <- primary$build_date %||% NA_character_
+    confirmed <- !is.na(running_build) && identical(running_build, recorded_build)
+    rows[[length(rows) + 1L]] <- check_row(
+      "running image",
+      status_if(confirmed, "warn"),
+      if (confirmed) {
+        paste0("matches the recorded primary image, by build date ", running_build)
+      } else if (is.na(running_build) || is.na(recorded_build)) {
+        "APPTAINER_CONTAINER is unset and there is no build date to compare"
+      } else {
+        paste0("running a container built ", running_build, ", recorded ", recorded_build)
+      }
+    )
   }
 
   rows[[length(rows) + 1L]] <- check_row(

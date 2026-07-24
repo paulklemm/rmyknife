@@ -120,6 +120,37 @@ test_that("a symlink that has moved on to another image is caught", {
   expect_match(report$detail[report$check == "running image"], "4\\.7\\.0")
 })
 
+test_that("without APPTAINER_CONTAINER the running image is checked by build date", {
+  skip_if_not(in_container(), "not running inside a container")
+  fixture <- fake_project()
+  running_build <- parse_build_date(
+    label_value(image_labels_self(), "org.label-schema.build-date")
+  )
+  skip_if(is.na(running_build), "container has no build-date label")
+
+  env_lock <- read_env_lock(fixture$project)
+  env_lock$images[[1]]$build_date <- running_build
+  write_env_lock(env_lock, env_lock_path(fixture$project))
+
+  withr::local_envvar(APPTAINER_CONTAINER = "")
+  report <- suppressMessages(project_verify(fixture$project, network = FALSE))
+  expect_equal(status_of(report, "running image"), "ok")
+  expect_match(report$detail[report$check == "running image"], "build date")
+})
+
+test_that("a build date that disagrees with the record is caught", {
+  skip_if_not(in_container(), "not running inside a container")
+  fixture <- fake_project()
+  env_lock <- read_env_lock(fixture$project)
+  env_lock$images[[1]]$build_date <- "1999-01-01"
+  write_env_lock(env_lock, env_lock_path(fixture$project))
+
+  withr::local_envvar(APPTAINER_CONTAINER = "")
+  report <- suppressMessages(project_verify(fixture$project, network = FALSE))
+  expect_equal(status_of(report, "running image"), "warn")
+  expect_match(report$detail[report$check == "running image"], "1999-01-01")
+})
+
 test_that("a makefile naming the image through a symlink still matches", {
   fixture <- fake_project()
   symlink <- file.path(dirname(fixture$image), "mytidyverse.simg")

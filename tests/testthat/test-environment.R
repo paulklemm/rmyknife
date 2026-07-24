@@ -100,9 +100,29 @@ test_that("unresolvable packages are exactly those a network restore would miss"
   )
 })
 
-test_that("project_init refuses to run outside a container", {
+test_that("being in a container is detected by its metadata, not an env var", {
+  # The env var says which image; the marker directory says whether we are in
+  # one at all. Conflating them made project_init() refuse to run in sessions
+  # that had lost APPTAINER_CONTAINER but were genuinely inside the container.
+  expect_false(in_container(file.path(withr::local_tempdir(), "absent")))
+
+  marker <- file.path(withr::local_tempdir(), ".singularity.d")
+  dir.create(marker)
+  expect_true(in_container(marker))
+
   withr::local_envvar(APPTAINER_CONTAINER = "")
-  expect_error(project_init(withr::local_tempdir()), "must run inside the singularity image")
+  expect_true(in_container(marker))
+})
+
+test_that("project_init asks for the image when the container did not name it", {
+  # This test runs inside a container, so the marker is present but the env var
+  # is not: exactly the situation a tmux session started outside produces.
+  skip_if_not(in_container(), "not running inside a container")
+  withr::local_envvar(APPTAINER_CONTAINER = "")
+  expect_error(
+    project_init(withr::local_tempdir()),
+    "APPTAINER_CONTAINER is not set"
+  )
 })
 
 test_that("project_init refuses to record an image it is not running in", {
