@@ -64,6 +64,26 @@ parse_build_date <- function(x) {
   sprintf("%04d-%02d-%02d", year, month, day)
 }
 
+#' Console tag for a status
+#'
+#' Fixed width so consecutive lines align, and plain text so output stays
+#' readable in logs, in CI and in terminals without emoji fonts.
+#'
+#' @param status One of "ok", "warn", "fail" or "info"
+#' @keywords internal
+status_tag <- function(status) {
+  tags <- c(ok = "[ OK ]", warn = "[WARN]", fail = "[FAIL]", info = "[INFO]")
+  tags[[status]]
+}
+
+#' Emit a tagged progress message
+#' @param status One of "ok", "warn", "fail" or "info"
+#' @param ... Parts of the message, pasted together
+#' @keywords internal
+status_message <- function(status, ...) {
+  message(status_tag(status), " ", ...)
+}
+
 #' Is this session running inside a singularity container?
 #'
 #' Tests for the metadata directory apptainer places in every container, rather
@@ -441,7 +461,7 @@ project_init <- function(
       )
     }
     if (is.na(given_build)) {
-      message("⚠️  Could not confirm that ", basename(image), " is this session's container.")
+      status_message("warn", "Could not confirm that ", basename(image), " is this session's container.")
     }
   }
 
@@ -483,16 +503,16 @@ project_init <- function(
   rprofile <- file.path(path, ".Rprofile")
   if (!file.exists(rprofile)) {
     writeLines(rprofile_template(snapshot_date, bioc_version, codename), rprofile)
-    message("✅ Wrote .Rprofile")
+    status_message("ok", "Wrote .Rprofile")
   }
 
   if (!file.exists(file.path(path, "renv.lock"))) {
     message("Initialising renv, this takes a while")
     renv::init(project = path, bioconductor = bioc_version, restart = FALSE)
     renv::snapshot(project = path, prompt = FALSE)
-    message("✅ Initialised renv")
+    status_message("ok", "Initialised renv")
   } else {
-    message("✅ renv.lock present, left untouched")
+    status_message("ok", "renv.lock present, left untouched")
   }
 
   # renv::init() creates or extends .Rprofile itself, so the pin check happens
@@ -508,23 +528,23 @@ project_init <- function(
   }
   if (!has_repo_pins(lines)) {
     writeLines(insert_pin_block(lines, pin_block(snapshot_date, bioc_version, codename)), rprofile)
-    message("✅ Inserted repository pins into existing .Rprofile")
+    status_message("ok", "Inserted repository pins into existing .Rprofile")
   } else {
-    message("✅ .Rprofile already pins dated repositories")
+    status_message("ok", ".Rprofile already pins dated repositories")
   }
 
   for (dir in dirs) {
     target <- file.path(path, dir)
     if (!dir.exists(target)) {
       dir.create(target, recursive = TRUE)
-      message("✅ Created ", dir, "/")
+      status_message("ok", "Created ", dir, "/")
     }
   }
 
   analysis_rprofile <- file.path(path, "analysis", ".Rprofile")
   if (dir.exists(dirname(analysis_rprofile)) && !file.exists(analysis_rprofile)) {
     writeLines(rprofile_subdir_template(), analysis_rprofile)
-    message("✅ Wrote analysis/.Rprofile")
+    status_message("ok", "Wrote analysis/.Rprofile")
   }
 
   images <- list(describe_image(image, "primary", labels = labels, checksum = checksum))
@@ -545,19 +565,19 @@ project_init <- function(
 
   lock_path <- env_lock_path(path)
   if (file.exists(lock_path) && !overwrite) {
-    message("⚠️  ", env_lock_file, " exists, not overwritten. Use overwrite = TRUE to refresh.")
+    status_message("warn", env_lock_file, " exists, not overwritten. Use overwrite = TRUE to refresh.")
   } else {
     write_env_lock(env_lock, lock_path)
-    message("✅ Wrote ", env_lock_file)
+    status_message("ok", "Wrote ", env_lock_file)
   }
 
   makefile <- file.path(path, "makefile")
   singularity_line <- paste0("SINGULARITY=", singularity_exec(image, bind))
   if (!file.exists(makefile) && !file.exists(file.path(path, "Makefile"))) {
     writeLines(makefile_template(image, bind), makefile)
-    message("✅ Wrote makefile")
+    status_message("ok", "Wrote makefile")
   } else {
-    message("⚠️  makefile exists, left untouched. It should contain:\n    ", singularity_line)
+    status_message("warn", "makefile exists, left untouched. It should contain:\n    ", singularity_line)
   }
 
   ensure_lines(

@@ -136,7 +136,7 @@ project_backup <- function(
   if ("library" %in% include) {
     library_relative <- active_library(path)
     if (is.null(library_relative)) {
-      message("⚠️  No renv library found, skipping the library tarball")
+      status_message("warn", "No renv library found, skipping the library tarball")
     } else {
       members <- c(members, "library.tar.zst")
     }
@@ -183,7 +183,7 @@ project_backup <- function(
   if ("images" %in% include) {
     for (image in env_lock$images) {
       if (!file.exists(image$path)) {
-        message("⚠️  Image missing, not archived: ", image$path)
+        status_message("warn", "Image missing, not archived: ", image$path)
         next
       }
       message("Adding image ", image$name, " (", round(image$bytes / 1e9, 2), " GB)")
@@ -198,7 +198,7 @@ project_backup <- function(
   message("Compressing")
   system2("zstd", c("-T0", "-q", "--rm", shQuote(tarball), "-o", shQuote(archive)))
 
-  message("✅ ", archive, " (", round(file.size(archive) / 1e9, 2), " GB)")
+  status_message("ok", archive, " (", round(file.size(archive) / 1e9, 2), " GB)")
   invisible(archive)
 }
 
@@ -256,7 +256,7 @@ project_restore <- function(archive, destination, verify = TRUE) {
     if (length(bad) > 0) {
       stop("Archive is damaged:\n  ", paste(bad, collapse = "\n  "))
     }
-    message("✅ All members verified")
+    status_message("ok", "All members verified")
   }
 
   library_tarball <- file.path(destination, "library.tar.zst")
@@ -264,17 +264,17 @@ project_restore <- function(archive, destination, verify = TRUE) {
     message("Unpacking package library")
     system2("tar", c("--use-compress-program=zstd", "-x", "-f", shQuote(library_tarball), "-C", shQuote(destination)))
     file.remove(library_tarball)
-    message("✅ Library restored, no compilation needed")
+    status_message("ok", "Library restored, no compilation needed")
   } else {
-    message("⚠️  No library tarball; rebuild with renv::restore() after checking project_verify()")
+    status_message("warn", "No library tarball; rebuild with renv::restore() after checking project_verify()")
   }
 
   for (image in manifest$images) {
     restored <- file.path(destination, "images", image$name)
     if (file.exists(restored)) {
-      message("✅ Image ", image$name, " restored; move it to ", dirname(image$path))
+      status_message("ok", "Image ", image$name, " restored; move it to ", dirname(image$path))
     } else {
-      message("⚠️  Image ", image$name, " not in this archive; it belongs at ", image$path)
+      status_message("warn", "Image ", image$name, " not in this archive; it belongs at ", image$path)
       if (!is.null(image$docker) && !is.na(image$docker)) {
         message("   May be rebuildable from docker tag ", image$docker)
       }
@@ -283,9 +283,10 @@ project_restore <- function(archive, destination, verify = TRUE) {
 
   revision <- manifest$git_revision %||% "unknown"
   if (!identical(revision, "nogit")) {
-    message("ℹ️  Environment only. Check the project out of git at commit ", revision)
+    status_message("info", "Environment only. Check the project out of git at commit ", revision)
   }
 
-  message("\n✅ Restored to ", destination, ". See RESTORE.md.")
+  message("")
+  status_message("ok", "Restored to ", destination, ". See RESTORE.md.")
   invisible(destination)
 }

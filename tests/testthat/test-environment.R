@@ -63,6 +63,15 @@ test_that("pins are appended when there is no renv activation yet", {
   expect_equal(result[1], "# just a profile")
 })
 
+test_that("status tags are fixed width so consecutive lines align", {
+  tags <- vapply(c("ok", "warn", "fail", "info"), status_tag, character(1))
+  expect_equal(length(unique(nchar(tags))), 1)
+  expect_false(any(grepl("[^[:print:]]", tags)))
+  expect_equal(status_tag("fail"), "[FAIL]")
+
+  expect_message(status_message("warn", "something"), "\\[WARN\\] something")
+})
+
 test_that("bind mounts are site specific and omitted unless asked for", {
   expect_equal(singularity_exec("/img.simg"), "singularity exec /img.simg")
   expect_equal(singularity_exec("/img.simg", NULL), "singularity exec /img.simg")

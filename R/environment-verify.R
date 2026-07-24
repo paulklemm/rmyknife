@@ -353,12 +353,11 @@ project_verify <- function(path = ".", deep = FALSE, network = TRUE, strict = FA
 #' @param report Tibble as returned by [project_verify()]
 #' @keywords internal
 print_verify <- function(report) {
-  symbols <- c(ok = "✅", warn = "⚠️ ", fail = "❌")
   width <- max(nchar(report$check))
   for (row in seq_len(nrow(report))) {
     message(sprintf(
       "%s %-*s  %s",
-      symbols[[report$status[row]]],
+      status_tag(report$status[row]),
       width,
       report$check[row],
       report$detail[row]
