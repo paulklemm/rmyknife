@@ -131,3 +131,95 @@ test_that("backup requires an initialised project", {
     "Run project_init"
   )
 })
+
+test_that("a backup made without recorded checksums still restores", {
+  # project_init(checksum = FALSE) leaves sha256 absent. The checksum file has
+  # to describe the archive regardless, or restore condemns a healthy backup.
+  fixture <- fake_project()
+  env_lock <- read_env_lock(fixture$project)
+  env_lock$images[[1]]$sha256 <- NA_character_
+  write_env_lock(env_lock, env_lock_path(fixture$project))
+
+  archive <- suppressMessages(project_backup(fixture$project, include = "images"))
+  destination <- file.path(fixture$root, "restored")
+  expect_no_error(suppressMessages(project_restore(archive, destination)))
+
+  checksums <- readLines(file.path(destination, "CHECKSUMS.sha256"))
+  image_line <- grep("images/", checksums, value = TRUE, fixed = TRUE)
+  expect_match(image_line, "^[0-9a-f]{64}  images/")
+})
+
+test_that("an image that drifted from its record stops the backup", {
+  fixture <- fake_project()
+  writeLines("tampered with since project_init", fixture$image)
+
+  expect_error(
+    suppressMessages(project_backup(fixture$project, include = "images")),
+    "Image has changed since it was recorded"
+  )
+})
+
+test_that("the manifest lists only the images that were really archived", {
+  fixture <- fake_project()
+  env_lock <- read_env_lock(fixture$project)
+  env_lock$images[[2]] <- list(
+    role = "aux", path = "/nowhere/tool.simg", name = "tool.simg",
+    bytes = 1, sha256 = NA_character_
+  )
+  write_env_lock(env_lock, env_lock_path(fixture$project))
+
+  archive <- suppressMessages(project_backup(fixture$project, include = "images"))
+  destination <- file.path(fixture$root, "restored")
+  suppressMessages(project_restore(archive, destination))
+
+  contents <- unlist(jsonlite::fromJSON(
+    file.path(destination, "MANIFEST.json"), simplifyVector = FALSE
+  )$contents)
+  expect_true(paste0("images/", basename(fixture$image)) %in% contents)
+  expect_false("images/tool.simg" %in% contents)
+})
+
+test_that("restore refuses an archive with no checksum file", {
+  fixture <- fake_project()
+  archive <- suppressMessages(project_backup(fixture$project, include = "images"))
+
+  scratch <- file.path(fixture$root, "scratch")
+  dir.create(scratch)
+  system2("tar", c("--use-compress-program=zstd", "-x", "-f", shQuote(archive), "-C", shQuote(scratch)))
+  file.remove(file.path(scratch, "CHECKSUMS.sha256"))
+  stripped <- file.path(fixture$root, "stripped.tar.zst")
+  system2("tar", c("-c", "--use-compress-program=zstd", "-f", shQuote(stripped), "-C", shQuote(scratch), "."))
+
+  expect_error(
+    suppressMessages(project_restore(stripped, file.path(fixture$root, "restored"))),
+    "no CHECKSUMS.sha256"
+  )
+})
+
+test_that("a failing archive command stops instead of reporting success", {
+  expect_error(run_or_stop("tar", c("-c", "-f", shQuote("/proc/nope/x.tar"), "--", "/nonexistent")), "failed with exit status")
+  expect_silent(run_or_stop("true", character()))
+})
+
+test_that("the library path survives regex metacharacters in the project path", {
+  # A project directory holding a `+` used to leave the path absolute, which
+  # made the library tarball step archive the wrong tree. Built where renv
+  # actually puts it, so the expectation holds on any platform.
+  project <- file.path(withr::local_tempdir(), "a+b(c)")
+  library_path <- renv::paths$library(project = project)
+  dir.create(library_path, recursive = TRUE)
+
+  expected <- dirname(substring(normalizePath(library_path), nchar(normalizePath(project)) + 2L))
+  expect_equal(active_library(project), expected)
+  expect_false(startsWith(active_library(project), "/"))
+})
+
+test_that("the architecture directory is stripped whatever the architecture", {
+  # A platform name renv would never compute, so the glob fallback is what runs.
+  root <- withr::local_tempdir()
+  version <- paste0("R-", getRversion()$major, ".", getRversion()$minor)
+  relative <- file.path("renv", "library", "linux-fake-platform", version)
+  dir.create(file.path(root, relative, "aarch64-unknown-linux-gnu"), recursive = TRUE)
+
+  expect_equal(active_library(root), relative)
+})

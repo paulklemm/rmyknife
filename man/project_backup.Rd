@@ -13,7 +13,8 @@ project_backup(
 \arguments{
 \item{path}{Project root.}
 
-\item{destination}{Directory for the archive, relative to \code{path}.}
+\item{destination}{Directory for the archive, relative to \code{path}. Staging
+happens here too, so it needs room for roughly twice the finished archive.}
 
 \item{include}{What to archive. Either or both of \code{"library"} and \code{"images"}.}
 }
@@ -30,6 +31,9 @@ its lockfile has entries that no longer resolve.
 The project code, its history and its \code{.Rprofile} are deliberately excluded:
 they live in git. The archive records the commit the environment served, so
 the two halves can be paired up again.
+
+Images are checksummed before they are archived, and a backup of an image
+that no longer matches \code{environment.lock} is refused rather than written.
 }
 \examples{
 \dontrun{

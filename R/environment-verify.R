@@ -88,7 +88,9 @@ verify_images <- function(env_lock, deep) {
       next
     }
     bytes <- as.numeric(file.size(image$path))
-    if (!isTRUE(all.equal(bytes, as.numeric(image$bytes)))) {
+    # Compared exactly. all.equal()'s relative tolerance is about 45 bytes on a
+    # 3 GB image, which is room enough to hide a deliberate edit.
+    if (!identical(bytes, as.numeric(image$bytes))) {
       rows[[length(rows) + 1L]] <- check_row(
         name, "fail", paste0("size changed: ", bytes, " bytes, expected ", image$bytes)
       )
@@ -131,9 +133,18 @@ project_verify <- function(path = ".", deep = FALSE, network = TRUE, strict = FA
   path <- normalizePath(path, mustWork = TRUE)
   rows <- list()
 
+  # Nothing downstream is meaningful without a lock that names a primary image,
+  # so both ways of lacking one report and return rather than raising.
   env_lock <- tryCatch(read_env_lock(path), error = function(e) NULL)
-  if (is.null(env_lock)) {
-    report <- check_row("environment.lock", "fail", "missing or unparseable, run project_init()")
+  unusable <- if (is.null(env_lock)) {
+    "missing or unparseable, run project_init()"
+  } else if (!any(vapply(env_lock$images, function(image) identical(image$role, "primary"), logical(1)))) {
+    "no image with role \"primary\", re-run project_init(overwrite = TRUE)"
+  } else {
+    NULL
+  }
+  if (!is.null(unusable)) {
+    report <- check_row("environment.lock", "fail", unusable)
     print_verify(report)
     if (strict) {
       stop("Verification failed")
@@ -153,7 +164,7 @@ project_verify <- function(path = ".", deep = FALSE, network = TRUE, strict = FA
   rows <- c(rows, verify_images(env_lock, deep))
 
   running <- Sys.getenv("APPTAINER_CONTAINER")
-  primary <- Filter(function(image) identical(image$role, "primary"), env_lock$images)[[1]]
+  primary <- primary_image(env_lock)
   if (nzchar(running)) {
     # Apptainer reports the path it was given, so a session started through a
     # `latest/` symlink names the symlink. Compare resolved paths, or every such
@@ -175,7 +186,7 @@ project_verify <- function(path = ".", deep = FALSE, network = TRUE, strict = FA
     # Inside a container that did not tell us which image file it came from.
     # The build date identifies it just as well.
     running_build <- parse_build_date(label_value(image_labels_self(), "org.label-schema.build-date"))
-    recorded_build <- primary$build_date %||% NA_character_
+    recorded_build <- lock_field(primary$build_date, NA_character_)
     confirmed <- !is.na(running_build) && identical(running_build, recorded_build)
     rows[[length(rows) + 1L]] <- check_row(
       "running image",
@@ -236,13 +247,22 @@ project_verify <- function(path = ".", deep = FALSE, network = TRUE, strict = FA
       }
     )
 
-    rprofile_lines <- readLines(file.path(path, ".Rprofile"), warn = FALSE)
+    # A missing .Rprofile is already reported above; reading it anyway would
+    # abort the run on exactly the fault this report exists to describe.
+    rprofile <- file.path(path, ".Rprofile")
+    rprofile_lines <- if (file.exists(rprofile)) readLines(rprofile, warn = FALSE) else character()
     pinned <- any(grepl(env_lock$snapshot_date, rprofile_lines, fixed = TRUE)) &&
       any(grepl(env_lock$bioc_version, rprofile_lines, fixed = TRUE))
     rows[[length(rows) + 1L]] <- check_row(
       ".Rprofile pins",
       status_if(pinned),
-      if (pinned) "pins match environment.lock" else "pins missing or disagree with environment.lock"
+      if (!file.exists(rprofile)) {
+        "no .Rprofile to pin anything"
+      } else if (pinned) {
+        "pins match environment.lock"
+      } else {
+        "pins missing or disagree with environment.lock"
+      }
     )
   }
 
@@ -274,7 +294,7 @@ project_verify <- function(path = ".", deep = FALSE, network = TRUE, strict = FA
   }
 
   if (network) {
-    repos <- pinned_repos(env_lock$snapshot_date, env_lock$bioc_version, sub("^.*:", "", primary$base %||% "noble"))
+    repos <- pinned_repos(env_lock$snapshot_date, env_lock$bioc_version, sub("^.*:", "", lock_field(primary$base, "noble")))
     unreachable <- names(repos)[!vapply(repos, repo_ok, logical(1))]
     rows[[length(rows) + 1L]] <- check_row(
       "repositories reachable",
@@ -291,8 +311,9 @@ project_verify <- function(path = ".", deep = FALSE, network = TRUE, strict = FA
     referenced <- unlist(regmatches(singularity, gregexpr("[^[:space:]]+\\.(simg|sif)", singularity)))
     # A makefile may name the image through a `latest/` symlink, so resolve
     # before comparing. Paths built from a make or shell variable cannot be
-    # resolved here, and are reported as unconfirmable rather than wrong.
-    variable <- any(grepl("[$]", referenced))
+    # resolved here, and are reported as unconfirmable rather than wrong. Tested
+    # on the whole line, because `$(IMAGE)` carries no `.simg` to be extracted.
+    variable <- any(grepl("[$]", singularity))
     matches <- primary$path %in% normalizePath(referenced, mustWork = FALSE)
     rows[[length(rows) + 1L]] <- check_row(
       "makefile image",
@@ -342,12 +363,6 @@ project_verify <- function(path = ".", deep = FALSE, network = TRUE, strict = FA
   }
   invisible(report)
 }
-
-#' Default value for NULL
-#' @param x Value
-#' @param y Fallback
-#' @keywords internal
-`%||%` <- function(x, y) if (is.null(x) || (length(x) == 1 && is.na(x))) y else x
 
 #' Print a verification report
 #' @param report Tibble as returned by [project_verify()]

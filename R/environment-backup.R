@@ -1,5 +1,21 @@
 # Backup and restore of a reproducible project environment.
 
+#' Run an archiving command, stopping when it fails
+#'
+#' A backup that reports success without producing an archive is worse than one
+#' that fails, because the failure is only discovered when the archive is needed.
+#'
+#' @param command Command to run
+#' @param args Arguments to the command
+#' @keywords internal
+run_or_stop <- function(command, args) {
+  status <- system2(command, args)
+  if (!identical(as.integer(status), 0L)) {
+    stop(command, " failed with exit status ", status)
+  }
+  invisible(status)
+}
+
 #' Path of the active renv library, relative to the project root
 #'
 #' renv keys libraries by platform and R version, so a project can carry trees
@@ -17,10 +33,44 @@ active_library <- function(path) {
     }
     library_path <- candidates[1]
   }
+  # Compared as text rather than as a pattern: a project path holding a regex
+  # metacharacter would otherwise fail to match and leave `relative` absolute.
+  root <- normalizePath(path, mustWork = FALSE)
+  full <- normalizePath(library_path, mustWork = FALSE)
+  relative <- if (startsWith(full, paste0(root, "/"))) substring(full, nchar(root) + 2L) else full
   # renv::paths$library() points at the architecture subdirectory; back up the
   # R-version directory above it so the tree restores where renv expects it.
-  relative <- sub(paste0("^", normalizePath(path, mustWork = FALSE), "/?"), "", normalizePath(library_path, mustWork = FALSE))
-  sub("/x86_64[^/]*$", "", relative)
+  # Recognised by the parent's name rather than by the architecture's, which is
+  # not always x86_64.
+  if (grepl("^R-[0-9]", basename(dirname(relative)))) {
+    relative <- dirname(relative)
+  }
+  relative
+}
+
+#' Checksums of the images going into a backup
+#'
+#' Recomputed rather than copied out of `environment.lock`, because the checksum
+#' file has to describe what is really in the archive. An image that no longer
+#' matches its record stops the backup: the project is then not the environment
+#' it claims to be, and archiving it would bake that disagreement in.
+#'
+#' @param images Image entries that will be archived
+#' @keywords internal
+image_checksums <- function(images) {
+  vapply(images, function(image) {
+    actual <- sha256_file(image$path)
+    recorded <- lock_field(image$sha256, NA_character_)
+    if (!is.na(recorded) && !identical(actual, recorded)) {
+      stop(
+        "Image has changed since it was recorded: ", image$path, "\n",
+        "  recorded: ", recorded, "\n",
+        "  on disk:  ", actual, "\n",
+        "Diagnose with project_verify(deep = TRUE) before backing up."
+      )
+    }
+    paste0(actual, "  images/", image$name)
+  }, character(1))
 }
 
 #' Instructions written into every backup
@@ -29,10 +79,10 @@ active_library <- function(path) {
 #' @param members Files contained in the archive
 #' @keywords internal
 restore_instructions <- function(env_lock, archive, members) {
-  primary <- Filter(function(image) identical(image$role, "primary"), env_lock$images)[[1]]
+  primary <- primary_image(env_lock)
   # Absent fields round-trip through JSON as NULL rather than NA.
-  docker <- primary$docker %||% NA_character_
-  sha256 <- primary$sha256 %||% NA_character_
+  docker <- lock_field(primary$docker, NA_character_)
+  sha256 <- lock_field(primary$sha256, NA_character_)
   c(
     paste0("# Restoring ", env_lock$project),
     "",
@@ -72,7 +122,7 @@ restore_instructions <- function(env_lock, archive, members) {
     "",
     "This is the compute environment only: the image and the package library. The",
     "project code, its history and its `.Rprofile` are not here, because they live",
-    paste0("in git. Check the repository out at commit `", env_lock$git_revision %||% "unknown", "` to pair the two halves back up.")
+    paste0("in git. Check the repository out at commit `", lock_field(env_lock$git_revision, "unknown"), "` to pair the two halves back up.")
   )
 }
 
@@ -87,8 +137,12 @@ restore_instructions <- function(env_lock, archive, members) {
 #' they live in git. The archive records the commit the environment served, so
 #' the two halves can be paired up again.
 #'
+#' Images are checksummed before they are archived, and a backup of an image
+#' that no longer matches `environment.lock` is refused rather than written.
+#'
 #' @param path Project root.
-#' @param destination Directory for the archive, relative to `path`.
+#' @param destination Directory for the archive, relative to `path`. Staging
+#'   happens here too, so it needs room for roughly twice the finished archive.
 #' @param include What to archive. Either or both of `"library"` and `"images"`.
 #' @return Path to the archive, invisibly.
 #' @export
@@ -119,10 +173,16 @@ project_backup <- function(
     stop("Backup already exists: ", archive)
   }
 
-  staging <- file.path(tempdir(), paste0(stem, "-staging"))
+  # Staged beside the archive rather than in tempdir(): the library tarball is
+  # gigabytes, and the destination is a directory the caller chose and that has
+  # room for the finished archive anyway.
+  staging <- file.path(target, paste0(stem, "-staging"))
   unlink(staging, recursive = TRUE)
   dir.create(staging, recursive = TRUE)
   on.exit(unlink(staging, recursive = TRUE), add = TRUE)
+  # The uncompressed tarball is an intermediate; a failed run should not leave
+  # gigabytes of it behind.
+  on.exit(unlink(tarball), add = TRUE)
 
   # renv.lock is the only project file carried, because it describes the very
   # library being archived. Everything else the project needs lives in git.
@@ -141,10 +201,27 @@ project_backup <- function(
       members <- c(members, "library.tar.zst")
     }
   }
+  # Settled before the manifest is written, so that what it lists is what the
+  # archive holds rather than what the environment lock hoped for.
+  archived_images <- list()
   if ("images" %in% include) {
-    members <- c(members, paste0("images/", vapply(env_lock$images, function(image) image$name, character(1))))
+    for (image in env_lock$images) {
+      if (file.exists(image$path)) {
+        archived_images[[length(archived_images) + 1L]] <- image
+      } else {
+        status_message("warn", "Image missing, not archived: ", image$path)
+      }
+    }
+    members <- c(members, paste0("images/", vapply(archived_images, function(image) image$name, character(1))))
   }
   members <- c(members, "MANIFEST.json", "CHECKSUMS.sha256", "RESTORE.md")
+
+  # Up front, so an image that drifted from its record is caught before rather
+  # than after the minutes the library tarball costs.
+  if (length(archived_images) > 0) {
+    message("Checksumming images")
+  }
+  image_lines <- image_checksums(archived_images)
 
   manifest <- env_lock
   manifest$backup_date <- format(Sys.Date())
@@ -157,7 +234,7 @@ project_backup <- function(
     message("Archiving package library, this takes a while")
     # -h dereferences: renv/library is a tree of symlinks into the shared cache,
     # so without this the archive would contain nothing but dangling links.
-    system2("tar", c(
+    run_or_stop("tar", c(
       "-c", "-h", "--use-compress-program=zstd",
       "-f", shQuote(file.path(staging, "library.tar.zst")),
       "-C", shQuote(path), shQuote(library_relative)
@@ -168,35 +245,23 @@ project_backup <- function(
   for (file in list.files(staging, recursive = TRUE)) {
     checksums <- c(checksums, paste0(sha256_file(file.path(staging, file)), "  ", file))
   }
-  if ("images" %in% include) {
-    for (image in env_lock$images) {
-      if (file.exists(image$path)) {
-        checksums <- c(checksums, paste0(image$sha256, "  images/", image$name))
-      }
-    }
-  }
+  checksums <- c(checksums, image_lines)
   writeLines(checksums, file.path(staging, "CHECKSUMS.sha256"))
 
   message("Building archive")
-  system2("tar", c("-c", "-f", shQuote(tarball), "-C", shQuote(staging), "."))
+  run_or_stop("tar", c("-c", "-f", shQuote(tarball), "-C", shQuote(staging), "."))
 
-  if ("images" %in% include) {
-    for (image in env_lock$images) {
-      if (!file.exists(image$path)) {
-        status_message("warn", "Image missing, not archived: ", image$path)
-        next
-      }
-      message("Adding image ", image$name, " (", round(image$bytes / 1e9, 2), " GB)")
-      system2("tar", c(
-        "-r", "-f", shQuote(tarball),
-        "--transform", shQuote("s,^,images/,"),
-        "-C", shQuote(dirname(image$path)), shQuote(image$name)
-      ))
-    }
+  for (image in archived_images) {
+    message("Adding image ", image$name, " (", round(image$bytes / 1e9, 2), " GB)")
+    run_or_stop("tar", c(
+      "-r", "-f", shQuote(tarball),
+      "--transform", shQuote("s,^,images/,"),
+      "-C", shQuote(dirname(image$path)), shQuote(image$name)
+    ))
   }
 
   message("Compressing")
-  system2("zstd", c("-T0", "-q", "--rm", shQuote(tarball), "-o", shQuote(archive)))
+  run_or_stop("zstd", c("-T0", "-q", "--rm", shQuote(tarball), "-o", shQuote(archive)))
 
   status_message("ok", archive, " (", round(file.size(archive) / 1e9, 2), " GB)")
   invisible(archive)
@@ -231,7 +296,7 @@ project_restore <- function(archive, destination, verify = TRUE) {
   destination <- normalizePath(destination, mustWork = TRUE)
 
   message("Extracting ", basename(archive))
-  system2("tar", c("--use-compress-program=zstd", "-x", "-f", shQuote(normalizePath(archive)), "-C", shQuote(destination)))
+  run_or_stop("tar", c("--use-compress-program=zstd", "-x", "-f", shQuote(normalizePath(archive)), "-C", shQuote(destination)))
 
   manifest_path <- file.path(destination, "MANIFEST.json")
   if (!file.exists(manifest_path)) {
@@ -240,8 +305,12 @@ project_restore <- function(archive, destination, verify = TRUE) {
   manifest <- jsonlite::fromJSON(manifest_path, simplifyVector = FALSE)
 
   if (verify) {
+    checksum_path <- file.path(destination, "CHECKSUMS.sha256")
+    if (!file.exists(checksum_path)) {
+      stop("Archive has no CHECKSUMS.sha256, this does not look like a project backup")
+    }
     message("Verifying checksums")
-    checksums <- readLines(file.path(destination, "CHECKSUMS.sha256"), warn = FALSE)
+    checksums <- readLines(checksum_path, warn = FALSE)
     bad <- character()
     for (line in checksums) {
       expected <- sub("[[:space:]].*$", "", line)
@@ -262,7 +331,7 @@ project_restore <- function(archive, destination, verify = TRUE) {
   library_tarball <- file.path(destination, "library.tar.zst")
   if (file.exists(library_tarball)) {
     message("Unpacking package library")
-    system2("tar", c("--use-compress-program=zstd", "-x", "-f", shQuote(library_tarball), "-C", shQuote(destination)))
+    run_or_stop("tar", c("--use-compress-program=zstd", "-x", "-f", shQuote(library_tarball), "-C", shQuote(destination)))
     file.remove(library_tarball)
     status_message("ok", "Library restored, no compilation needed")
   } else {
@@ -281,7 +350,7 @@ project_restore <- function(archive, destination, verify = TRUE) {
     }
   }
 
-  revision <- manifest$git_revision %||% "unknown"
+  revision <- lock_field(manifest$git_revision, "unknown")
   if (!identical(revision, "nogit")) {
     status_message("info", "Environment only. Check the project out of git at commit ", revision)
   }

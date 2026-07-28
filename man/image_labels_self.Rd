@@ -4,7 +4,11 @@
 \alias{image_labels_self}
 \title{Labels of the image the current session runs in}
 \usage{
-image_labels_self()
+image_labels_self(marker = "/.singularity.d")
+}
+\arguments{
+\item{marker}{Directory that marks a container. Exposed for testing, and
+named as in \code{\link[=in_container]{in_container()}} so the two can be faked together.}
 }
 \description{
 Apptainer exposes the image metadata inside the container, so this needs no

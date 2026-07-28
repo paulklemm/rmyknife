@@ -17,6 +17,20 @@ env_lock_path <- function(path = ".") {
   file.path(path, env_lock_file)
 }
 
+#' Value of a possibly absent lock field
+#'
+#' A field that was NA when the lock was written comes back as NULL, so absence
+#' has two spellings by the time a lock is read again. Deliberately not spelled
+#' `%||%`: base R's operator falls back on NULL alone, and one spelling meaning
+#' two different things is a trap for whoever reads this next.
+#'
+#' @param x Field value, possibly NULL or NA
+#' @param default Value to use when the field is absent
+#' @keywords internal
+lock_field <- function(x, default) {
+  if (is.null(x) || length(x) == 0 || (length(x) == 1 && is.na(x))) default else x
+}
+
 #' Read a label, returning NA when absent or empty
 #' @param labels Named list of image labels
 #' @param key Label name
@@ -102,9 +116,11 @@ in_container <- function(marker = "/.singularity.d") {
 #' Apptainer exposes the image metadata inside the container, so this needs no
 #' apptainer binary and no subprocess.
 #'
+#' @param marker Directory that marks a container. Exposed for testing, and
+#'   named as in [in_container()] so the two can be faked together.
 #' @keywords internal
-image_labels_self <- function() {
-  labels <- "/.singularity.d/labels.json"
+image_labels_self <- function(marker = "/.singularity.d") {
+  labels <- file.path(marker, "labels.json")
   if (!file.exists(labels)) {
     return(list())
   }
@@ -440,6 +456,15 @@ project_init <- function(
     }
     image <- running
   }
+
+  # Before renv::init(), which takes minutes: a typo in `aux_images` should not
+  # cost a package library build to discover.
+  for (candidate in c(image, aux_images)) {
+    if (!file.exists(candidate)) {
+      stop("Image not found: ", candidate)
+    }
+  }
+
   if (nzchar(running)) {
     if (!identical(normalizePath(image, mustWork = FALSE), normalizePath(running, mustWork = FALSE))) {
       stop(
@@ -547,26 +572,27 @@ project_init <- function(
     status_message("ok", "Wrote analysis/.Rprofile")
   }
 
-  images <- list(describe_image(image, "primary", labels = labels, checksum = checksum))
-  for (aux in aux_images) {
-    images[[length(images) + 1L]] <- describe_image(aux, "aux", checksum = checksum)
-  }
-
-  env_lock <- list(
-    project = basename(path),
-    rmyknife_version = as.character(utils::packageVersion("rmyknife")),
-    created = format(Sys.Date()),
-    r_version = as.character(getRversion()),
-    snapshot_date = snapshot_date,
-    bioc_version = bioc_version,
-    bind = bind,
-    images = images
-  )
-
+  # Describing the images checksums them, which is minutes of reading per image,
+  # so it only happens when the result is actually going to be written.
   lock_path <- env_lock_path(path)
   if (file.exists(lock_path) && !overwrite) {
     status_message("warn", env_lock_file, " exists, not overwritten. Use overwrite = TRUE to refresh.")
+    env_lock <- read_env_lock(path)
   } else {
+    images <- list(describe_image(image, "primary", labels = labels, checksum = checksum))
+    for (aux in aux_images) {
+      images[[length(images) + 1L]] <- describe_image(aux, "aux", checksum = checksum)
+    }
+    env_lock <- list(
+      project = basename(path),
+      rmyknife_version = as.character(utils::packageVersion("rmyknife")),
+      created = format(Sys.Date()),
+      r_version = as.character(getRversion()),
+      snapshot_date = snapshot_date,
+      bioc_version = bioc_version,
+      bind = bind,
+      images = images
+    )
     write_env_lock(env_lock, lock_path)
     status_message("ok", "Wrote ", env_lock_file)
   }
@@ -606,4 +632,19 @@ read_env_lock <- function(path = ".") {
     stop("No ", env_lock_file, " in ", normalizePath(path, mustWork = FALSE), ". Run project_init() first.")
   }
   jsonlite::fromJSON(lock_path, simplifyVector = FALSE)
+}
+
+#' The primary image of an environment lock
+#'
+#' Every other layer is described relative to this one, so a lock without it is
+#' not usable rather than merely incomplete.
+#'
+#' @param env_lock Environment lock
+#' @keywords internal
+primary_image <- function(env_lock) {
+  primary <- Filter(function(image) identical(image$role, "primary"), env_lock$images)
+  if (length(primary) == 0) {
+    stop("No image with role \"primary\" in ", env_lock_file, ". Re-run project_init(overwrite = TRUE).")
+  }
+  primary[[1]]
 }

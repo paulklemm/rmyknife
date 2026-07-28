@@ -162,3 +162,41 @@ test_that("project_init refuses to record an image it is not running in", {
 test_that("read_env_lock explains itself when the project was never initialised", {
   expect_error(read_env_lock(withr::local_tempdir()), "Run project_init")
 })
+
+test_that("project_init rejects a missing image before renv::init() runs", {
+  root <- withr::local_tempdir()
+  running <- fake_image(root, "running.simg")
+  withr::local_envvar(APPTAINER_CONTAINER = running)
+  expect_error(
+    project_init(root, aux_images = file.path(root, "absent.simg")),
+    "Image not found"
+  )
+  # renv::init() is the expensive step; nothing should have been built yet.
+  expect_false(file.exists(file.path(root, "renv.lock")))
+})
+
+test_that("a lock field that was NA reads back as absent, not as NULL", {
+  # NA round-trips through JSON as null, so absence has two spellings on read.
+  expect_equal(lock_field(NULL, "fallback"), "fallback")
+  expect_equal(lock_field(NA_character_, "fallback"), "fallback")
+  expect_equal(lock_field(character(), "fallback"), "fallback")
+  expect_equal(lock_field("value", "fallback"), "value")
+})
+
+test_that("a lock without a primary image is refused by name", {
+  fixture <- fake_project()
+  env_lock <- read_env_lock(fixture$project)
+  env_lock$images[[1]]$role <- "aux"
+  expect_error(primary_image(env_lock), "No image with role")
+})
+
+test_that("image labels are read from the container marker directory", {
+  marker <- withr::local_tempdir()
+  expect_equal(image_labels_self(marker), list())
+  writeLines('{"org.label-schema.build-date": "Tuesday_21_July_2026_10:1:14_UTC"}',
+             file.path(marker, "labels.json"))
+  expect_equal(
+    label_value(image_labels_self(marker), "org.label-schema.build-date"),
+    "Tuesday_21_July_2026_10:1:14_UTC"
+  )
+})

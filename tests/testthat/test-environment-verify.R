@@ -206,3 +206,38 @@ test_that("verify fails cleanly on an uninitialised project", {
   expect_equal(report$status, "fail")
   expect_equal(nrow(report), 1)
 })
+
+test_that("a missing .Rprofile is reported, not raised", {
+  fixture <- fake_project()
+  file.remove(file.path(fixture$project, ".Rprofile"))
+
+  report <- suppressMessages(project_verify(fixture$project, network = FALSE))
+  expect_equal(status_of(report, "project files"), "fail")
+  expect_equal(status_of(report, ".Rprofile pins"), "fail")
+  expect_match(report$detail[report$check == ".Rprofile pins"], "no .Rprofile")
+})
+
+test_that("a lock without a primary image is reported, not raised", {
+  fixture <- fake_project()
+  env_lock <- read_env_lock(fixture$project)
+  env_lock$images[[1]]$role <- "aux"
+  write_env_lock(env_lock, env_lock_path(fixture$project))
+
+  report <- suppressMessages(project_verify(fixture$project, network = FALSE))
+  expect_equal(status_of(report, "environment.lock"), "fail")
+  expect_match(report$detail[report$check == "environment.lock"], "primary")
+})
+
+test_that("a makefile naming the image through one whole variable says so", {
+  # The `.simg` literal is inside the variable here, so there is no path to
+  # extract and the variable has to be spotted on the line itself.
+  fixture <- fake_project()
+  writeLines(
+    "SINGULARITY=singularity exec --bind /data:/data $(IMAGE)",
+    file.path(fixture$project, "makefile")
+  )
+
+  report <- suppressMessages(project_verify(fixture$project, network = FALSE))
+  expect_equal(status_of(report, "makefile image"), "warn")
+  expect_match(report$detail[report$check == "makefile image"], "variable")
+})
