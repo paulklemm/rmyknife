@@ -223,3 +223,86 @@ test_that("the architecture directory is stripped whatever the architecture", {
 
   expect_equal(active_library(root), relative)
 })
+
+test_that("a library outside the project is refused, not silently misrooted", {
+  # tar strips a leading `/` with a warning and exit status 0, so an absolute
+  # member would restore under destination/<abs path> where renv never looks.
+  fixture <- fake_project()
+  withr::local_envvar(RENV_PATHS_LIBRARY = file.path(fixture$root, "external-lib"))
+  dir.create(renv::paths$library(project = fixture$project), recursive = TRUE)
+
+  expect_error(active_library(fixture$project), "outside the project")
+  expect_error(
+    suppressMessages(project_backup(fixture$project)),
+    "outside the project"
+  )
+})
+
+test_that("a failed restore does not block the retry", {
+  fixture <- fake_project()
+  corrupt <- file.path(fixture$root, "corrupt.tar.zst")
+  writeLines("not an archive", corrupt)
+  destination <- file.path(fixture$root, "restored")
+
+  expect_error(suppressMessages(project_restore(corrupt, destination)), "failed with exit status")
+  expect_false(dir.exists(destination))
+
+  # The retry now reaches the archive rather than tripping over the leftovers.
+  expect_error(suppressMessages(project_restore(corrupt, destination)), "failed with exit status")
+})
+
+test_that("a successful restore keeps its destination", {
+  fixture <- fake_project()
+  archive <- suppressMessages(project_backup(fixture$project, include = "images"))
+  destination <- file.path(fixture$root, "restored")
+  suppressMessages(project_restore(archive, destination))
+
+  expect_true(dir.exists(destination))
+  expect_true(file.exists(file.path(destination, "MANIFEST.json")))
+})
+
+test_that("a symlinked renv/library is archived, not refused", {
+  # Linking renv/library at faster storage is a common habit on a cluster. The
+  # member stays project-relative and tar's -h dereferences it, so this is
+  # archivable and must not be mistaken for a library outside the project.
+  fixture <- fake_project()
+  version <- paste0("R-", getRversion()$major, ".", getRversion()$minor)
+  elsewhere <- file.path(fixture$root, "fast-storage")
+  dir.create(file.path(elsewhere, "linux-ubuntu-noble", version, "x86_64-pc-linux-gnu", "dplyr"), recursive = TRUE)
+  writeLines("Package: dplyr", file.path(elsewhere, "linux-ubuntu-noble", version, "x86_64-pc-linux-gnu", "dplyr", "DESCRIPTION"))
+  dir.create(file.path(fixture$project, "renv"), showWarnings = FALSE)
+  file.symlink(elsewhere, file.path(fixture$project, "renv", "library"))
+
+  expect_equal(
+    active_library(fixture$project),
+    file.path("renv", "library", "linux-ubuntu-noble", version)
+  )
+
+  # And it survives the round trip, dereferenced.
+  archive <- suppressMessages(project_backup(fixture$project, include = "library"))
+  destination <- file.path(fixture$root, "restored")
+  suppressMessages(project_restore(archive, destination))
+  expect_true(file.exists(file.path(
+    destination, "renv", "library", "linux-ubuntu-noble", version,
+    "x86_64-pc-linux-gnu", "dplyr", "DESCRIPTION"
+  )))
+})
+
+test_that("staging left by a killed run does not accumulate in the project", {
+  # Staging lives beside the archive rather than in tempdir(), so a run that
+  # died without unwinding leaves gigabytes in the project until swept.
+  fixture <- fake_project()
+  stale <- file.path(fixture$project, "backup", "project_2020-01-01_deadbee-staging")
+  dir.create(stale, recursive = TRUE)
+  writeLines("a large library tarball", file.path(stale, "library.tar.zst"))
+
+  # Something the caller owns, which a bare *-staging sweep would have eaten.
+  bystander <- file.path(fixture$project, "backup", "my-own-staging")
+  dir.create(bystander)
+
+  archive <- suppressMessages(project_backup(fixture$project, include = "images"))
+
+  expect_false(dir.exists(stale))
+  expect_true(dir.exists(bystander))
+  expect_true(file.exists(archive))
+})

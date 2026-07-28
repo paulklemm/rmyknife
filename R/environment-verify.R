@@ -133,16 +133,10 @@ project_verify <- function(path = ".", deep = FALSE, network = TRUE, strict = FA
   path <- normalizePath(path, mustWork = TRUE)
   rows <- list()
 
-  # Nothing downstream is meaningful without a lock that names a primary image,
-  # so both ways of lacking one report and return rather than raising.
+  # Nothing downstream is meaningful without a complete lock, so every way of
+  # lacking one reports and returns rather than raising.
   env_lock <- tryCatch(read_env_lock(path), error = function(e) NULL)
-  unusable <- if (is.null(env_lock)) {
-    "missing or unparseable, run project_init()"
-  } else if (!any(vapply(env_lock$images, function(image) identical(image$role, "primary"), logical(1)))) {
-    "no image with role \"primary\", re-run project_init(overwrite = TRUE)"
-  } else {
-    NULL
-  }
+  unusable <- lock_defect(env_lock)
   if (!is.null(unusable)) {
     report <- check_row("environment.lock", "fail", unusable)
     print_verify(report)

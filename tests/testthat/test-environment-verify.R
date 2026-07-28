@@ -241,3 +241,18 @@ test_that("a makefile naming the image through one whole variable says so", {
   expect_equal(status_of(report, "makefile image"), "warn")
   expect_match(report$detail[report$check == "makefile image"], "variable")
 })
+
+test_that("an incomplete lock is reported, not raised", {
+  # The report greps .Rprofile for these values, so a lock lacking them used to
+  # abort with "invalid 'pattern' argument" instead of describing the fault.
+  for (field in c("snapshot_date", "bioc_version", "r_version")) {
+    fixture <- fake_project()
+    env_lock <- read_env_lock(fixture$project)
+    env_lock[[field]] <- NULL
+    write_env_lock(env_lock, env_lock_path(fixture$project))
+
+    report <- suppressMessages(project_verify(fixture$project, network = FALSE))
+    expect_equal(status_of(report, "environment.lock"), "fail")
+    expect_match(report$detail[report$check == "environment.lock"], field)
+  }
+})

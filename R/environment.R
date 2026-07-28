@@ -634,6 +634,30 @@ read_env_lock <- function(path = ".") {
   jsonlite::fromJSON(lock_path, simplifyVector = FALSE)
 }
 
+#' Why an environment lock cannot be reported on, or NULL when it can
+#'
+#' [project_verify()] dereferences these fields throughout, so a lock lacking
+#' any of them would abort the run on the very fault the report exists to
+#' describe. Checked once, up front, so every way of being unusable is reported
+#' rather than raised.
+#'
+#' @param env_lock Environment lock, or NULL when it could not be read
+#' @keywords internal
+lock_defect <- function(env_lock) {
+  if (is.null(env_lock)) {
+    return("missing or unparseable, run project_init()")
+  }
+  required <- c("r_version", "snapshot_date", "bioc_version")
+  absent <- required[vapply(required, function(field) is.null(lock_field(env_lock[[field]], NULL)), logical(1))]
+  if (length(absent) > 0) {
+    return(paste0("incomplete, no ", paste(absent, collapse = ", "), "; re-run project_init(overwrite = TRUE)"))
+  }
+  if (!any(vapply(env_lock$images, function(image) identical(image$role, "primary"), logical(1)))) {
+    return("no image with role \"primary\", re-run project_init(overwrite = TRUE)")
+  }
+  NULL
+}
+
 #' The primary image of an environment lock
 #'
 #' Every other layer is described relative to this one, so a lock without it is

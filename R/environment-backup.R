@@ -33,11 +33,26 @@ active_library <- function(path) {
     }
     library_path <- candidates[1]
   }
-  # Compared as text rather than as a pattern: a project path holding a regex
-  # metacharacter would otherwise fail to match and leave `relative` absolute.
+  # Compared as text rather than as a pattern, so a project path holding a regex
+  # metacharacter still matches. Tried before resolving symlinks, because
+  # `renv/library` is often a link to faster storage: that still archives
+  # correctly, since tar is given a project-relative member and dereferences it
+  # (-h). Only a library that cannot be named relative to the project at all is
+  # a problem, and it is a silent one -- tar strips the leading `/` from an
+  # absolute member with a warning and exit status 0, so the library would
+  # restore somewhere renv never looks.
   root <- normalizePath(path, mustWork = FALSE)
-  full <- normalizePath(library_path, mustWork = FALSE)
-  relative <- if (startsWith(full, paste0(root, "/"))) substring(full, nchar(root) + 2L) else full
+  under_root <- function(candidate) startsWith(candidate, paste0(root, "/"))
+  full <- if (under_root(library_path)) library_path else normalizePath(library_path, mustWork = FALSE)
+  if (!under_root(full)) {
+    stop(
+      "The renv library lives outside the project, so it cannot be archived relative to it:\n",
+      "  library: ", full, "\n",
+      "  project: ", root, "\n",
+      "Unset RENV_PATHS_LIBRARY, or archive the images alone with include = \"images\"."
+    )
+  }
+  relative <- substring(full, nchar(root) + 2L)
   # renv::paths$library() points at the architecture subdirectory; back up the
   # R-version directory above it so the tree restores where renv expects it.
   # Recognised by the parent's name rather than by the architecture's, which is
@@ -177,7 +192,12 @@ project_backup <- function(
   # gigabytes, and the destination is a directory the caller chose and that has
   # room for the finished archive anyway.
   staging <- file.path(target, paste0(stem, "-staging"))
-  unlink(staging, recursive = TRUE)
+  # Every leftover of this project, not just this stem's: a hard-killed run
+  # cannot clean up after itself, and staging no longer lives in tempdir()
+  # where the session exit would have taken it. Matched on the project name as
+  # well as the suffix, because `destination` need not be a directory this
+  # function owns.
+  unlink(Sys.glob(file.path(target, paste0(env_lock$project, "_*-staging"))), recursive = TRUE)
   dir.create(staging, recursive = TRUE)
   on.exit(unlink(staging, recursive = TRUE), add = TRUE)
   # The uncompressed tarball is an intermediate; a failed run should not leave
@@ -293,6 +313,10 @@ project_restore <- function(archive, destination, verify = TRUE) {
     stop("Destination already exists: ", destination)
   }
   dir.create(destination, recursive = TRUE)
+  # Removed again unless the restore runs to the end, so a failed attempt does
+  # not block the retry on "Destination already exists".
+  completed <- FALSE
+  on.exit(if (!completed) unlink(destination, recursive = TRUE), add = TRUE)
   destination <- normalizePath(destination, mustWork = TRUE)
 
   message("Extracting ", basename(archive))
@@ -357,5 +381,6 @@ project_restore <- function(archive, destination, verify = TRUE) {
 
   message("")
   status_message("ok", "Restored to ", destination, ". See RESTORE.md.")
+  completed <- TRUE
   invisible(destination)
 }
