@@ -24,47 +24,40 @@ devtools::install_github("paulklemm/rmyknife")
 
 ## 📦 Reproducible project environments
 
-Three layers pin an analysis project: the singularity image (OS, R, system libraries), the R package library (`renv.lock` plus dated repositories), and the code (git).
-`renv` already covers the middle layer.
-These functions add the container layer as a checksummed, in-repo fact recorded in `environment.lock`, and make the whole thing verifiable and archivable.
+Three layers pin a project: the singularity image, the package library (`renv.lock` + dated repos), the code (git).
+`renv` covers the middle one.
+These add the container layer to `environment.lock` as a checksummed, in-repo fact, and make the whole thing verifiable and archivable.
 
-Run everything **inside the project's image**, because `renv` builds the library with the running R.
+Run inside the project's image — `renv` builds the library with the running R.
 
 ```r
-# Set the project up. Safe on existing projects: an existing renv.lock and
-# .Rprofile are left alone, only the repository pins are guaranteed.
-rmyknife::project_init()
-
-# A site that needs a bind mount, and a project that uses a tool container:
+rmyknife::project_init()     # existing renv.lock and .Rprofile are left alone
 rmyknife::project_init(bind = "/data:/data", aux_images = "/path/to/tool.sif")
-
-# Check that everything is present, consistent and restorable
-rmyknife::project_verify()
-
-# Archive the compute environment: the image and the built package library
-rmyknife::project_backup()
-
-# Bring one back
+rmyknife::project_verify()   # present? consistent? restorable?
+rmyknife::project_backup()   # archive image + built library
 rmyknife::project_restore("backup/myproject_2026-07-24_a1b2c3d.tar.zst", destination = "restored")
 ```
 
-`project_backup()` archives the **compute environment only** — the singularity images and the built renv library, with `renv.lock` to describe it.
-The project code, its history and its `.Rprofile` are not included, because they live in git.
-The archive records the commit the environment served, so the two halves can be paired back up.
+**Backup holds the compute environment only** — images, built library, `renv.lock`.
+Code and history stay in git; the archive records the commit, so the halves pair back up.
+Archives run to a few GB. `include = "library"` drops the images.
+Staging lives in `destination`, which therefore needs room for ~2× the archive.
 
-`project_verify()` reports two independent kinds of restorability.
-**From backup** is offline and exact: the archived image plus the binary library, so no compilation and no network.
-**From lockfile** is a rebuild from scratch and needs every package to resolve, which is commonly partial for a project converted from a pre-renv state — a locally installed package will never restore over the network.
-A project can be perfectly restorable from its backup while its lockfile is still messy, so the useful order is convert, back up immediately, then clean the lockfile up at leisure.
+**Verify reports two kinds of restorability.**
+_From backup_ — offline and exact, no compilation, no network.
+_From lockfile_ — network rebuild, needs every package to resolve; commonly partial after a pre-renv conversion, since a locally installed package never resolves.
+Backup-restorable while lockfile-messy is normal: convert, back up, clean up later.
 
-For a project that has no `renv` yet, the CRAN snapshot defaults to the **image build date** rather than today, since its packages are frozen at image build time.
+**Backup refuses rather than guesses.**
+Image checksum ≠ `environment.lock` → stop; `project_verify(deep = TRUE)` shows what moved.
+Library outside the project (`RENV_PATHS_LIBRARY`) → stop, since it cannot be named relative to the root; use `include = "images"`.
+A `renv/library` symlinked at faster storage is fine — dereferenced into the archive.
 
-Launching through a `latest/` symlink is fine.
-`environment.lock` always records the versioned image the symlink resolves to, never the moving pointer, and `project_verify()` resolves symlinks before comparing.
-So once `latest/` moves on to a newer image, verify tells you that you are no longer running the container the project was pinned to.
-
-Note that `project_backup()` copies the images, so archives are large — expect a few GB for a typical R image plus its library.
-Use `include = "library"` for a quick snapshot without them.
+**Also.**
+No `renv` yet → the CRAN snapshot defaults to the **image build date**, not today.
+`latest/` symlinks are fine: `environment.lock` records the versioned image behind the pointer, and verify resolves before comparing, so a moved `latest/` shows up.
+A failed `project_restore()` removes what it created.
+Missing `.Rprofile` or incomplete `environment.lock` → a failed check, not an abort.
 
 ## 🧠 Memoise for BiomaRt
 
@@ -97,6 +90,12 @@ options(
 
 ## ⏳ History
 
+- _2026-07-28_
+  - Code-review the `project_*` functions
+  - Fix backups made with `checksum = FALSE` restoring as "damaged", and `tar`/`zstd` failures being reported as success
+  - `project_backup()` checksums images as it archives them, and refuses one that changed since `project_init()` or a library outside the project
+  - `project_verify()` reports a missing `.Rprofile` or an incomplete `environment.lock` instead of aborting on it
+  - Bump to `0.4.1`
 - _2026-07-24_
   - Add `project_init`, `project_verify`, `project_backup` and `project_restore` for reproducible project environments
   - Bump to `0.4.0`
